@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_patient_screen.dart';
 import 'edit_patient_screen.dart';
+import 'package:pustu_app_hanua/screens/mobile/perawat_home_screen.dart';
 
 class PatientListScreen extends StatefulWidget {
   const PatientListScreen({super.key});
@@ -19,34 +20,35 @@ class _PatientListScreenState extends State<PatientListScreen> {
   void deleteData(String id) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: const Text("Konfirmasi"),
-        content: const Text("Yakin ingin menghapus data pasien ini?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Batal"),
-          ),
-          TextButton(
-            onPressed: () async {
-              await FirebaseFirestore.instance
-                  .collection('patients')
-                  .doc(id)
-                  .delete();
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: const Text("Konfirmasi"),
+            content: const Text("Yakin ingin menghapus data pasien ini?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Batal"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                      .collection('patients')
+                      .doc(id)
+                      .delete();
 
-              Navigator.pop(context);
+                  Navigator.pop(context);
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Data berhasil dihapus")),
-              );
-            },
-            child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Data berhasil dihapus")),
+                  );
+                },
+                child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -75,7 +77,15 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PerawatHomeScreen(),
+                        ),
+                        (route) => false,
+                      );
+                    },
                   ),
                   const Spacer(),
                   _logo("Kemenkes"),
@@ -130,9 +140,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
             /// 🔹 LIST DATA
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('patients')
-                    .snapshots(),
+                stream:
+                    FirebaseFirestore.instance
+                        .collection('patients')
+                        .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
@@ -141,15 +152,14 @@ class _PatientListScreenState extends State<PatientListScreen> {
                   final data = snapshot.data!.docs;
 
                   /// 🔍 FILTER SEARCH
-                  final filtered = data.where((doc) {
-                    final nama = doc['nama'].toString().toLowerCase();
-                    return nama.contains(searchText);
-                  }).toList();
+                  final filtered =
+                      data.where((doc) {
+                        final nama = doc['nama'].toString().toLowerCase();
+                        return nama.contains(searchText);
+                      }).toList();
 
                   if (filtered.isEmpty) {
-                    return const Center(
-                      child: Text("Data tidak ditemukan"),
-                    );
+                    return const Center(child: Text("Data tidak ditemukan"));
                   }
 
                   return ListView.builder(
@@ -175,10 +185,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => EditPatientScreen(
-                                        id: doc.id,
-                                        data: doc.data() as Map,
-                                      ),
+                                      builder:
+                                          (_) => EditPatientScreen(
+                                            id: doc.id,
+                                            data: doc.data() as Map,
+                                          ),
                                     ),
                                   );
                                 },
@@ -203,16 +214,19 @@ class _PatientListScreenState extends State<PatientListScreen> {
                               children: [
                                 /// ✏️ EDIT
                                 IconButton(
-                                  icon: const Icon(Icons.edit,
-                                      color: Colors.blue),
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.blue,
+                                  ),
                                   onPressed: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => EditPatientScreen(
-                                          id: doc.id,
-                                          data: doc.data() as Map,
-                                        ),
+                                        builder:
+                                            (_) => EditPatientScreen(
+                                              id: doc.id,
+                                              data: doc.data() as Map,
+                                            ),
                                       ),
                                     );
                                   },
@@ -220,8 +234,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
                                 /// 🗑️ DELETE
                                 IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
                                   onPressed: () => deleteData(doc.id),
                                 ),
                               ],
@@ -253,11 +269,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
   Widget _logo(String text) {
     return Column(
       children: [
-        Container(
-          width: 35,
-          height: 35,
-          color: Colors.grey[300],
-        ),
+        Container(width: 35, height: 35, color: Colors.grey[300]),
         const SizedBox(height: 2),
         Text(text, style: const TextStyle(fontSize: 8)),
       ],

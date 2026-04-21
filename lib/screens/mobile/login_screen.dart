@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'perawat_home_screen.dart';
+import '../wrapper/perawat_wrapper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,11 +27,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       /// 🔍 CARI EMAIL DARI USERNAME
-      final query = await FirebaseFirestore.instance
-          .collection('users')
-          .where('username', isEqualTo: usernameController.text.trim())
-          .limit(1)
-          .get();
+      final query =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('username', isEqualTo: usernameController.text.trim())
+              .limit(1)
+              .get();
 
       if (query.docs.isEmpty) {
         throw FirebaseAuthException(
@@ -51,10 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
       /// 🚀 MASUK KE BERANDA PERAWAT
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const PerawatHomeScreen()),
+        MaterialPageRoute(builder: (_) => const PerawatWrapper()),
         (route) => false,
       );
-
     } on FirebaseAuthException catch (e) {
       String message = "Login gagal";
 
@@ -80,11 +80,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('users')
-          .where('username', isEqualTo: username)
-          .limit(1)
-          .get();
+      final query =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .limit(1)
+              .get();
 
       if (query.docs.isEmpty) {
         throw Exception("Username tidak ditemukan");
@@ -96,12 +97,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("Berhasil"),
-          content: Text("Link reset password dikirim ke $email"),
-        ),
+        builder:
+            (_) => AlertDialog(
+              title: const Text("Berhasil"),
+              content: Text("Link reset password dikirim ke $email"),
+            ),
       );
-
     } catch (e) {
       _showErrorDialog("Gagal reset password");
     }
@@ -111,25 +112,28 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error, color: Colors.red, size: 50),
-              const SizedBox(height: 10),
-              Text(message, textAlign: TextAlign.center),
-              const SizedBox(height: 15),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("OK"),
-              )
-            ],
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error, color: Colors.red, size: 50),
+                  const SizedBox(height: 10),
+                  Text(message, textAlign: TextAlign.center),
+                  const SizedBox(height: 15),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("OK"),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -151,7 +155,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 20),
 
-                  const Icon(Icons.local_hospital, size: 80, color: Colors.green),
+                  const Icon(
+                    Icons.local_hospital,
+                    size: 80,
+                    color: Colors.green,
+                  ),
 
                   const SizedBox(height: 10),
 
@@ -176,8 +184,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (v) =>
-                              v!.isEmpty ? "Username tidak boleh kosong" : null,
+                          validator:
+                              (v) =>
+                                  v!.isEmpty
+                                      ? "Username tidak boleh kosong"
+                                      : null,
                         ),
 
                         const SizedBox(height: 20),
@@ -205,8 +216,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (v) =>
-                              v!.isEmpty ? "Password tidak boleh kosong" : null,
+                          validator:
+                              (v) =>
+                                  v!.isEmpty
+                                      ? "Password tidak boleh kosong"
+                                      : null,
                         ),
 
                         /// 🔁 LUPA PASSWORD
@@ -226,9 +240,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 50,
                           child: ElevatedButton(
                             onPressed: isLoading ? null : login,
-                            child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text("LOGIN"),
+                            child:
+                                isLoading
+                                    ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                    : const Text("LOGIN"),
                           ),
                         ),
                       ],
