@@ -15,7 +15,35 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   final tgl = TextEditingController();
   final alamat = TextEditingController();
 
+  bool isLoading = false;
+
+  void showSuccess() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.check_circle, color: Colors.green, size: 60),
+            SizedBox(height: 10),
+            Text("Data berhasil ditambahkan"),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context);
+      Navigator.pop(context);
+    });
+  }
+
   Future<void> saveData() async {
+    if (nama.text.isEmpty || nik.text.isEmpty) return;
+
+    setState(() => isLoading = true);
+
     await FirebaseFirestore.instance.collection('patients').add({
       'nik': nik.text,
       'nama': nama.text,
@@ -24,7 +52,9 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       'alamat': alamat.text,
     });
 
-    Navigator.pop(context);
+    setState(() => isLoading = false);
+
+    showSuccess();
   }
 
   @override
@@ -60,11 +90,15 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               const SizedBox(height: 20),
 
               ElevatedButton(
-                onPressed: saveData,
+                onPressed: isLoading ? null : saveData,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text("SIMPAN"),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("SIMPAN"),
               )
             ],
           ),

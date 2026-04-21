@@ -18,6 +18,8 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
   late TextEditingController tgl;
   late TextEditingController alamat;
 
+  bool isLoading = false;
+
   @override
   void initState() {
     nik = TextEditingController(text: widget.data['nik']);
@@ -28,7 +30,35 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
     super.initState();
   }
 
+  /// 🔥 POPUP SUCCESS
+  void showSuccess(String text) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 60),
+            const SizedBox(height: 10),
+            Text(text, textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context); // close dialog
+      Navigator.pop(context); // back
+    });
+  }
+
+  /// UPDATE
   Future<void> updateData() async {
+    if (nama.text.isEmpty || nik.text.isEmpty) return;
+
+    setState(() => isLoading = true);
+
     await FirebaseFirestore.instance
         .collection('patients')
         .doc(widget.id)
@@ -40,16 +70,42 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
       'alamat': alamat.text,
     });
 
-    Navigator.pop(context);
+    setState(() => isLoading = false);
+
+    showSuccess("Data berhasil diupdate");
   }
 
+  /// DELETE
   Future<void> deleteData() async {
-    await FirebaseFirestore.instance
-        .collection('patients')
-        .doc(widget.id)
-        .delete();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Konfirmasi"),
+        content: const Text("Yakin hapus data ini?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          TextButton(
+            onPressed: () async {
+              await FirebaseFirestore.instance
+                  .collection('patients')
+                  .doc(widget.id)
+                  .delete();
 
-    Navigator.pop(context);
+              Navigator.pop(context);
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Data berhasil dihapus")),
+              );
+            },
+            child: const Text("Hapus"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -84,20 +140,28 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
 
               const SizedBox(height: 20),
 
+              /// UPDATE BUTTON
               ElevatedButton(
-                onPressed: updateData,
+                onPressed: isLoading ? null : updateData,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text("UPDATE"),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("UPDATE"),
               ),
 
               const SizedBox(height: 10),
 
+              /// DELETE BUTTON
               ElevatedButton(
                 onPressed: deleteData,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 child: const Text("HAPUS"),
               ),
