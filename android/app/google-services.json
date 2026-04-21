@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "846267024541",
+    "project_id": "pustu-hanua-app",
+    "storage_bucket": "pustu-hanua-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846267024541:android:294f96802666287b184074",
+        "android_client_info": {
+          "package_name": "com.example.pustu_app_hanua"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBLexq3NX3lR5-dbuwA_YOQrQeBsJwJhU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
