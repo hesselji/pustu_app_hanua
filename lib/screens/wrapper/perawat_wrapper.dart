@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../mobile/patient_list_screen.dart';
-import '../desktop/perawat_dashboard_desktop.dart';
+import 'package:flutter/foundation.dart';
+
+import '../desktop/web_home_screen.dart';
+import '../mobile/perawat_home_screen.dart';
 
 class PerawatWrapper extends StatelessWidget {
   const PerawatWrapper({super.key});
@@ -9,10 +11,16 @@ class PerawatWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
+    /// 💻 WEB (PASTI KE DESKTOP)
+    if (kIsWeb) {
+      return const WebHomeScreen();
+    }
+
+    /// 📱 MOBILE / TABLET
     if (width > 800) {
-      return const PerawatDashboardDesktop(); // 💻 WEB
+      return const WebHomeScreen(); // tablet
     } else {
-      return const PatientListScreen(); // 📱 MOBILE
+      return const PerawatHomeScreen(); // hp
     }
   }
 }
