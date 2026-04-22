@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 import 'screens/mobile/home_screen.dart';
+import 'screens/desktop/web_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
 
   runApp(const MyApp());
 }
@@ -14,9 +25,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+
+      /// 🔥 INI YANG PENTING
+      home: kIsWeb
+          ? const WebHomeScreen()   // 💻 WEB
+          : const HomeScreen(),    // 📱 MOBILE
     );
   }
 }
