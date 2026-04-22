@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'patient_list_screen.dart';
 import 'perawat_manageinfo_pelayanan.dart'; // 🔥 TAMBAHAN
+import 'medical_patient_list_screen.dart';
 
 class PerawatHomeScreen extends StatelessWidget {
   const PerawatHomeScreen({super.key});
@@ -89,7 +90,6 @@ class PerawatHomeScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-
                   /// 🔹 Kelola Pendaftaran
                   _menuCard(
                     icon: Icons.assignment,
@@ -118,7 +118,12 @@ class PerawatHomeScreen extends StatelessWidget {
                     icon: Icons.medical_services,
                     title: "Kelola Rekam Medis",
                     onTap: () {
-                      // TODO
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MedicalPatientListScreen(),
+                        ),
+                      );
                     },
                   ),
 
@@ -191,10 +196,7 @@ class PerawatHomeScreen extends StatelessWidget {
             children: [
               Icon(icon, color: Colors.green),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
