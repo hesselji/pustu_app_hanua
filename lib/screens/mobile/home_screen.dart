@@ -8,7 +8,7 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
- State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    /// 🔥 AUTO LOGIN CHECK
+    /// 🔥 AUTO LOGIN
     Future.microtask(() {
       final user = FirebaseAuth.instance.currentUser;
 
@@ -35,179 +35,241 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFE8F5E9), Color(0xFFFFFFFF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              /// 🔹 LOGO ATAS
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _logoPlaceholder("Bakti Husada"),
-                    _logoPlaceholder("Kemenkes"),
-                  ],
-                ),
+      backgroundColor: const Color(0xFFF5F7FA),
+
+      body: SafeArea(
+        child: Column(
+          children: [
+
+            /// 🔥 HEADER (LOGO + TITLE)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _logo("assets/logo_bakti_husada.png"),
 
-              const SizedBox(height: 20),
-
-              /// 🔹 GAMBAR PUSTU
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.grey[300],
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
+                  Column(
+                    children: const [
+                      Text(
+                        "Pustu Hanua",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        "Layanan Kesehatan",
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Text(
-                      "GAMBAR PUSTU",
-                      style: TextStyle(color: Colors.black54),
-                    ),
+
+                  _logo("assets/logo_kemenkes.png"),
+                ],
+              ),
+            ),
+
+            /// 👋 GREETING
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Selamat Datang 👋",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
+            ),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: 8),
 
-              /// 🔹 TEXT SELAMAT DATANG
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Column(
-                  children: const [
-                    Text(
-                      "SELAMAT DATANG",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      "DI APLIKASI LAYANAN KESEHATAN\nPUSKESMAS PEMBANTU HANUA",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              /// 🔹 BUTTON PERAWAT
-              _customButton(
-                text: "Masuk sebagai Perawat",
-                icon: Icons.medical_services,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              /// 🔹 BUTTON PASIEN
-              _customButton(
-                text: "Masuk sebagai Pasien",
-                icon: Icons.person,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PatientHomeScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const Spacer(),
-
-              /// 🔹 FOOTER
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerLeft,
                 child: Text(
-                  "Copyright © 2026",
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  "Silakan pilih layanan yang tersedia",
+                  style: TextStyle(color: Colors.grey),
                 ),
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// 🏥 PLACEHOLDER PUSTU (ESTETIK)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              height: 170,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.3),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+
+                  /// ICON BACKGROUND
+                  Positioned(
+                    right: -20,
+                    bottom: -20,
+                    child: Icon(
+                      Icons.local_hospital,
+                      size: 120,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+
+                  /// TEXT
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.home_work,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          "Pustu Hanua",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          "Tempat layanan kesehatan masyarakat",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            /// 🔥 MENU
+            _menuCard(
+              title: "Masuk sebagai Perawat",
+              icon: Icons.medical_services,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            _menuCard(
+              title: "Masuk sebagai Pasien",
+              icon: Icons.person,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PatientHomeScreen(),
+                  ),
+                );
+              },
+            ),
+
+            const Spacer(),
+
+            /// 🔻 FOOTER
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Text(
+                "© Pustu Hanua 2026",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// 🔸 COMPONENT LOGO
-  Widget _logoPlaceholder(String text) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          color: Colors.grey[300],
-          child: const Icon(Icons.image, color: Colors.grey),
-        ),
-        const SizedBox(height: 5),
-        Text(text, style: const TextStyle(fontSize: 10)),
-      ],
+  /// 🔹 LOGO
+  Widget _logo(String path) {
+    return Container(
+      width: 45,
+      height: 45,
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Image.asset(path, fit: BoxFit.contain),
     );
   }
 
-  /// 🔸 COMPONENT BUTTON
-  Widget _customButton({
-    required String text,
+  /// 🔥 MENU CARD
+  Widget _menuCard({
+    required String title,
     required IconData icon,
     required VoidCallback onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: GestureDetector(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          height: 55,
+          padding: const EdgeInsets.symmetric(vertical: 18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)],
-            ),
-            borderRadius: BorderRadius.circular(15),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.green.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 6,
               ),
             ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Colors.white),
+              Icon(icon, color: Colors.green),
               const SizedBox(width: 10),
               Text(
-                text,
+                title,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
