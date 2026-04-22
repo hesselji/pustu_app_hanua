@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'patient_list_screen.dart';
+import 'perawat_manageinfo_pelayanan.dart'; // 🔥 TAMBAHAN
 
 class PerawatHomeScreen extends StatelessWidget {
   const PerawatHomeScreen({super.key});
@@ -34,7 +35,7 @@ class PerawatHomeScreen extends StatelessWidget {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => const HomeScreen()),
-                (route) => false, // 🔥 hapus semua stack
+                (route) => false,
               );
             },
           ),
@@ -88,14 +89,17 @@ class PerawatHomeScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
+
+                  /// 🔹 Kelola Pendaftaran
                   _menuCard(
                     icon: Icons.assignment,
                     title: "Kelola Pendaftaran",
                     onTap: () {
-                      // TODO: pindah ke halaman pendaftaran
+                      // TODO
                     },
                   ),
 
+                  /// 🔹 Data Pasien
                   _menuCard(
                     icon: Icons.people,
                     title: "Kelola Data Pasien",
@@ -109,6 +113,7 @@ class PerawatHomeScreen extends StatelessWidget {
                     },
                   ),
 
+                  /// 🔹 Rekam Medis
                   _menuCard(
                     icon: Icons.medical_services,
                     title: "Kelola Rekam Medis",
@@ -117,14 +122,21 @@ class PerawatHomeScreen extends StatelessWidget {
                     },
                   ),
 
+                  /// 🔥 INFORMASI PELAYANAN (SUDAH TERHUBUNG)
                   _menuCard(
                     icon: Icons.info,
                     title: "Informasi Pelayanan",
                     onTap: () {
-                      // TODO
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InformasiPelayananScreen(),
+                        ),
+                      );
                     },
                   ),
 
+                  /// 🔹 Laporan
                   _menuCard(
                     icon: Icons.bar_chart,
                     title: "Laporan Bulanan",
@@ -179,7 +191,10 @@ class PerawatHomeScreen extends StatelessWidget {
             children: [
               Icon(icon, color: Colors.green),
               const SizedBox(width: 10),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
         ),

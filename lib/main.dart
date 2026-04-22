@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:provider/provider.dart';
 
 import 'screens/mobile/home_screen.dart';
+import 'provider/service_status.dart'; // ✅ FIX
+import 'firebase_options.dart';
+
+
 import 'screens/desktop/web_home_screen.dart';
 
 void main() async {
@@ -17,7 +21,12 @@ void main() async {
     await Firebase.initializeApp();
   }
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ServiceStatus(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
