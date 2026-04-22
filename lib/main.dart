@@ -4,9 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/mobile/home_screen.dart';
-import 'provider/service_status.dart'; // ✅ FIX
+import 'provider/service_status.dart';
 import 'firebase_options.dart';
-
 
 import 'screens/desktop/web_home_screen.dart';
 
@@ -38,9 +37,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       /// 🔥 INI YANG PENTING
-      home: kIsWeb
-          ? const WebHomeScreen()   // 💻 WEB
-          : const HomeScreen(),    // 📱 MOBILE
+      home:
+          kIsWeb
+              ? const WebHomeScreen() // 💻 WEB
+              : const HomeScreen(), // 📱 MOBILE
     );
   }
 }
