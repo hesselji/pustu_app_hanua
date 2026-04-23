@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'patient_list_screen.dart';
-import 'perawat_manageinfo_pelayanan.dart'; // 🔥 TAMBAHAN
+import 'perawat_manageinfo_pelayanan.dart';
+import 'perawat_laporanBulanan.dart'; // ✅ TAMBAHAN
 
 class PerawatHomeScreen extends StatelessWidget {
   const PerawatHomeScreen({super.key});
@@ -89,7 +90,6 @@ class PerawatHomeScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-
                   /// 🔹 Kelola Pendaftaran
                   _menuCard(
                     icon: Icons.assignment,
@@ -122,7 +122,7 @@ class PerawatHomeScreen extends StatelessWidget {
                     },
                   ),
 
-                  /// 🔥 INFORMASI PELAYANAN (SUDAH TERHUBUNG)
+                  /// 🔹 Informasi Pelayanan
                   _menuCard(
                     icon: Icons.info,
                     title: "Informasi Pelayanan",
@@ -136,12 +136,17 @@ class PerawatHomeScreen extends StatelessWidget {
                     },
                   ),
 
-                  /// 🔹 Laporan
+                  /// 🔥 Laporan Bulanan (SUDAH TERHUBUNG)
                   _menuCard(
                     icon: Icons.bar_chart,
                     title: "Laporan Bulanan",
                     onTap: () {
-                      // TODO
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RekapanBulananPage(),
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -191,10 +196,7 @@ class PerawatHomeScreen extends StatelessWidget {
             children: [
               Icon(icon, color: Colors.green),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
