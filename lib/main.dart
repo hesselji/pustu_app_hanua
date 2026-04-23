@@ -64,11 +64,6 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF5F7FA),
         fontFamily: 'Roboto',
       ),
-
-      /// 🔥 ROUTING UTAMA
-      home: kIsWeb
-          ? const WebHomeScreen()   // 💻 WEB
-          : const SplashScreen(),  // 📱 MOBILE
     );
   }
 }
