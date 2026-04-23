@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-
-import 'screens/mobile/home_screen.dart';
-import 'provider/service_status.dart'; // ✅ FIX
+import 'screens/mobile/splash_screen.dart'; // 🔥 TAMBAHAN
+import 'provider/service_status.dart';
 import 'firebase_options.dart';
-
-
 import 'screens/desktop/web_home_screen.dart';
 
 void main() async {
@@ -37,10 +34,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      /// 🔥 INI YANG PENTING
+      /// 🔥 FIX FINAL
       home: kIsWeb
-          ? const WebHomeScreen()   // 💻 WEB
-          : const HomeScreen(),    // 📱 MOBILE
+          ? const WebHomeScreen()   // 💻 WEB tetap
+          : const SplashScreen(),  // 📱 MOBILE pakai splash
     );
   }
 }

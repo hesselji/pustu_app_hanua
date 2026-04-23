@@ -23,13 +23,26 @@ dev_dependencies:
     sdk: flutter
 
   flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0   # 🔥 TAMBAHAN
   flutter_lints: ^5.0.0
 
-# 🔥 INI HARUS DI LUAR (PENTING BANGET)
+# 🔥 APP ICON
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/logo_pustu.png"
+
+# 🔥 NATIVE SPLASH (ANTI LAYAR HITAM)
+flutter_native_splash:
+  color: "#F5F7FA"
+  image: assets/logo_pustu.png
+
+  android: true
+  ios: true
+
+  android_12:
+    image: assets/logo_pustu.png
+    icon_background_color: "#F5F7FA"
 
 flutter:
   uses-material-design: true

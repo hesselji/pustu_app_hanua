@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'patient_home_screen.dart';
 import 'login_screen.dart';
-import 'perawat_home_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,25 +10,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-  @override
-  void initState() {
-    super.initState();
-
-    /// 🔥 AUTO LOGIN
-    Future.microtask(() {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const PerawatHomeScreen(),
-          ),
-        );
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
