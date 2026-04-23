@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'dart:ui'; 
+import 'dart:ui';
 
 import 'screens/mobile/home_screen.dart';
 import 'provider/service_status.dart';
@@ -17,9 +17,9 @@ import 'screens/desktop/web_home_screen.dart';
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+  };
 }
 
 void main() async {
