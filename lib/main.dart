@@ -8,9 +8,7 @@ import 'screens/mobile/home_screen.dart';
 import 'provider/service_status.dart';
 import 'firebase_options.dart';
 
-import 'screens/mobile/splash_screen.dart';
-import 'provider/service_status.dart';
-import 'firebase_options.dart';
+/// import 'screens/mobile/splash_screen.dart';
 import 'screens/desktop/web_home_screen.dart';
 
 /// 🔥 CUSTOM SCROLL (BIAR WEB BISA DRAG)
