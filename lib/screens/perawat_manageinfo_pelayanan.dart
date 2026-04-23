@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../provider/service_status.dart';
 
 class InformasiPelayananScreen extends StatelessWidget {
   const InformasiPelayananScreen({super.key});
@@ -71,6 +73,20 @@ class InformasiPelayananScreen extends StatelessWidget {
                     color: isAvailable ? Colors.green : Colors.red,
                   ),
                 ),
+                Consumer<ServiceStatus>(
+                  builder: (context, service, child) {
+                    return SwitchListTile(
+                      title: const Text("Status Pelayanan"),
+                      subtitle: Text(
+                        service.isAvailable ? "Tersedia" : "Tidak Tersedia",
+                      ),
+                      value: service.isAvailable,
+                      onChanged: (value) {
+                        service.toggleStatus(value);
+                        },
+                      );
+                    },
+                  ),
               ],
             ),
           );
