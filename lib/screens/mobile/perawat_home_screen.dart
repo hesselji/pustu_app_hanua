@@ -4,6 +4,8 @@ import 'home_screen.dart';
 import 'patient_list_screen.dart';
 import 'perawat_manageinfo_pelayanan.dart';
 import 'perawat_laporanBulanan.dart'; // ✅ TAMBAHAN
+import 'perawat_manageinfo_pelayanan.dart'; // 🔥 TAMBAHAN
+import 'medical_patient_list_screen.dart';
 
 class PerawatHomeScreen extends StatelessWidget {
   const PerawatHomeScreen({super.key});
@@ -118,7 +120,12 @@ class PerawatHomeScreen extends StatelessWidget {
                     icon: Icons.medical_services,
                     title: "Kelola Rekam Medis",
                     onTap: () {
-                      // TODO
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MedicalPatientListScreen(),
+                        ),
+                      );
                     },
                   ),
 

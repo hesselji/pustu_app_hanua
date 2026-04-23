@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_patient_screen.dart';
 import 'edit_patient_screen.dart';
-import 'package:pustu_app_hanua/screens/mobile/perawat_home_screen.dart';
+import 'patient_detail_screen.dart';
 
 class PatientListScreen extends StatefulWidget {
   const PatientListScreen({super.key});
@@ -12,267 +12,252 @@ class PatientListScreen extends StatefulWidget {
 }
 
 class _PatientListScreenState extends State<PatientListScreen> {
-  final TextEditingController searchController = TextEditingController();
-
   String searchText = "";
 
-  /// 🔥 DELETE FUNCTION (WITH CONFIRM)
-  void deleteData(String id) {
+  /// 🔥 DELETE SUPER AMAN
+  void showDeleteDialog(String id) {
+    final confirmController = TextEditingController();
+
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Hapus Pasien"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Ketik 'HAPUS' untuk melanjutkan",
+              style: TextStyle(color: Colors.red),
             ),
-            title: const Text("Konfirmasi"),
-            content: const Text("Yakin ingin menghapus data pasien ini?"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Batal"),
+            const SizedBox(height: 10),
+            TextField(
+              controller: confirmController,
+              decoration: const InputDecoration(
+                hintText: "Ketik HAPUS",
               ),
-              TextButton(
-                onPressed: () async {
-                  await FirebaseFirestore.instance
-                      .collection('patients')
-                      .doc(id)
-                      .delete();
-
-                  Navigator.pop(context);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Data berhasil dihapus")),
-                  );
-                },
-                child: const Text("Hapus", style: TextStyle(color: Colors.red)),
-              ),
-            ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              if (confirmController.text != "HAPUS") return;
+
+              await FirebaseFirestore.instance
+                  .collection('patients')
+                  .doc(id)
+                  .delete();
+
+              Navigator.pop(context);
+            },
+            child: const Text("Hapus"),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /// ➕ ADD BUTTON
+      backgroundColor: const Color(0xFFF5F7FA),
+
+      /// 🔥 APP BAR MODERN
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          "Kelola Data Pasien",
+          style: TextStyle(color: Colors.black),
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+
+      /// ➕ FLOATING BUTTON
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green,
-        child: const Icon(Icons.add),
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AddPatientScreen()),
           );
         },
+        child: const Icon(Icons.add),
       ),
 
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// 🔹 HEADER
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PerawatHomeScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                  const Spacer(),
-                  _logo("Kemenkes"),
-                  const SizedBox(width: 10),
-                  _logo("Pustu"),
-                  const Spacer(),
-                  const Text(
-                    "Pustu Hanua",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+      body: Column(
+        children: [
+          const SizedBox(height: 10),
+
+          /// 🔍 SEARCH BAR (ESTETIK)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
                   ),
                 ],
               ),
-            ),
-
-            const Divider(),
-
-            const SizedBox(height: 10),
-
-            /// 🔹 TITLE
-            const Text(
-              "KELOLA DATA PASIEN",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 20),
-
-            /// 🔹 SEARCH
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
-                controller: searchController,
-                onChanged: (value) {
-                  setState(() {
-                    searchText = value.toLowerCase();
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: "Masukkan Nama",
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                onChanged: (v) =>
+                    setState(() => searchText = v.toLowerCase()),
+                decoration: const InputDecoration(
+                  icon: Icon(Icons.search),
+                  hintText: "Cari nama pasien...",
+                  border: InputBorder.none,
                 ),
               ),
             ),
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 10),
 
-            /// 🔹 LIST DATA
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance
-                        .collection('patients')
-                        .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+          /// 📋 LIST PASIEN
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('patients')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  final data = snapshot.data!.docs;
+                final data = snapshot.data!.docs;
 
-                  /// 🔍 FILTER SEARCH
-                  final filtered =
-                      data.where((doc) {
-                        final nama = doc['nama'].toString().toLowerCase();
-                        return nama.contains(searchText);
-                      }).toList();
+                final filtered = data.where((doc) {
+                  final nama = doc['nama'].toString().toLowerCase();
+                  return nama.contains(searchText);
+                }).toList();
 
-                  if (filtered.isEmpty) {
-                    return const Center(child: Text("Data tidak ditemukan"));
-                  }
+                if (filtered.isEmpty) {
+                  return const Center(child: Text("Tidak ada data"));
+                }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final doc = filtered[index];
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, i) {
+                    final doc = filtered[i];
+                    final d = doc.data() as Map;
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 15),
-                        padding: const EdgeInsets.all(15),
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PatientDetailScreen(data: d),
+                          ),
+                        );
+                      },
+
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
 
                         child: Row(
                           children: [
-                            /// 🔹 TEXT
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => EditPatientScreen(
-                                            id: doc.id,
-                                            data: doc.data() as Map,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      doc['nama'],
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text("NIK ${doc['nik']}"),
-                                  ],
-                                ),
+                            /// 👤 AVATAR ICON
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green[100],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.green,
                               ),
                             ),
 
-                            /// 🔥 ACTION BUTTONS
+                            const SizedBox(width: 12),
+
+                            /// 🔹 TEXT
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    d['nama'] ?? "-",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "NIK ${d['nik'] ?? '-'}",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            /// 🔥 ACTION BUTTON
                             Row(
                               children: [
-                                /// ✏️ EDIT
+                                /// EDIT
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    color: Colors.blue,
-                                  ),
+                                  icon: const Icon(Icons.edit,
+                                      color: Colors.blue),
                                   onPressed: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder:
-                                            (_) => EditPatientScreen(
-                                              id: doc.id,
-                                              data: doc.data() as Map,
-                                            ),
+                                        builder: (_) => EditPatientScreen(
+                                          id: doc.id,
+                                          data: d,
+                                        ),
                                       ),
                                     );
                                   },
                                 ),
 
-                                /// 🗑️ DELETE
+                                /// DELETE
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () => deleteData(doc.id),
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.red),
+                                  onPressed: () =>
+                                      showDeleteDialog(doc.id),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-
-            /// 🔹 FOOTER
-            const Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: Text(
-                "Copyright © 2026",
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
-
-  /// 🔸 COMPONENT LOGO
-  Widget _logo(String text) {
-    return Column(
-      children: [
-        Container(width: 35, height: 35, color: Colors.grey[300]),
-        const SizedBox(height: 2),
-        Text(text, style: const TextStyle(fontSize: 8)),
-      ],
     );
   }
 }
