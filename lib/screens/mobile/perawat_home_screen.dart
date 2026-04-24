@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'patient_list_screen.dart';
-import 'perawat_manageinfo_pelayanan.dart'; // 🔥 TAMBAHAN
+import 'perawat_manageinfo_pelayanan.dart';
+import 'perawat_laporanBulanan.dart'; // ✅ TAMBAHAN
 import 'medical_patient_list_screen.dart';
+import 'perawat_kelolaPendaftaran_screen.dart';
 
 class PerawatHomeScreen extends StatelessWidget {
   const PerawatHomeScreen({super.key});
@@ -95,7 +97,13 @@ class PerawatHomeScreen extends StatelessWidget {
                     icon: Icons.assignment,
                     title: "Kelola Pendaftaran",
                     onTap: () {
-                      // TODO
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (_) => const PerawatKelolaPendaftaranScreen(),
+                        ),
+                      );
                     },
                   ),
 
@@ -127,7 +135,7 @@ class PerawatHomeScreen extends StatelessWidget {
                     },
                   ),
 
-                  /// 🔥 INFORMASI PELAYANAN (SUDAH TERHUBUNG)
+                  /// 🔹 Informasi Pelayanan
                   _menuCard(
                     icon: Icons.info,
                     title: "Informasi Pelayanan",
@@ -141,12 +149,17 @@ class PerawatHomeScreen extends StatelessWidget {
                     },
                   ),
 
-                  /// 🔹 Laporan
+                  /// 🔥 Laporan Bulanan (SUDAH TERHUBUNG)
                   _menuCard(
                     icon: Icons.bar_chart,
                     title: "Laporan Bulanan",
                     onTap: () {
-                      // TODO
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RekapanBulananPage(),
+                        ),
+                      );
                     },
                   ),
                 ],

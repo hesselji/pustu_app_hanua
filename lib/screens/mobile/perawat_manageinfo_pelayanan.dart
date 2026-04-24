@@ -51,7 +51,7 @@ class InformasiPelayananScreen extends StatelessWidget {
                 /// 🔥 TOGGLE
                 Switch(
                   value: isAvailable,
-                  activeColor: Colors.green,
+                  activeThumbColor: Colors.green,
                   onChanged: (value) async {
                     await firestore
                         .collection('service_status')
