@@ -1,0 +1,259 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class PatientRegisterScreen extends StatelessWidget {
+  const PatientRegisterScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+
+            /// 🔹 HEADER
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  const Spacer(),
+
+                  _logo("Kemenkes"),
+                  const SizedBox(width: 10),
+                  _logo("Pustu"),
+
+                  const Spacer(),
+
+                  const Text(
+                    "Pustu Hanua",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(),
+
+            /// 🔹 CONTENT
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    const SizedBox(height: 10),
+
+                    /// TITLE
+                    const Center(
+                      child: Text(
+                        "FORM DAFTAR BEROBAT",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    /// 🔥 STATUS REAL-TIME FIRESTORE
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('service_status')
+                          .doc('status')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+
+                        if (!snapshot.hasData) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>?;
+
+                        bool isAvailable = true;
+
+                        if (data != null &&
+                            data.containsKey('isAvailable')) {
+                          isAvailable = data['isAvailable'];
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _box(
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text("Status Petugas"),
+                                    Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: isAvailable
+                                            ? Colors.green
+                                            : Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            Expanded(
+                              child: _box(
+                                child: Text(
+                                  isAvailable
+                                      ? "Tersedia"
+                                      : "Tidak Tersedia",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isAvailable
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(),
+
+                    /// DATA PASIEN
+                    const Text("Data Pasien"),
+                    const SizedBox(height: 10),
+                    _inputBox(),
+
+                    const SizedBox(height: 20),
+                    const Divider(),
+
+                    /// KELUHAN
+                    const Text("Keluhan Pasien"),
+                    const SizedBox(height: 10),
+                    _inputBox(height: 80),
+
+                    const SizedBox(height: 20),
+                    const Divider(),
+
+                    /// TANGGAL
+                    const Text("Tanggal Berobat"),
+                    const SizedBox(height: 10),
+                    _inputBox(),
+
+                    const SizedBox(height: 20),
+                    const Divider(),
+
+                    /// JENIS LAYANAN
+                    const Center(
+                      child: Text("Pilih Jenis Layanan"),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _button("Home Care"),
+                        _button("Pustu Visit"),
+                      ],
+                    ),
+
+                    const SizedBox(height: 30),
+                    const Divider(),
+
+                    /// BUTTON BERSIHKAN
+                    GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        width: double.infinity,
+                        height: 40,
+                        color: Colors.grey[300],
+                        child: const Center(child: Text("BERSIHKAN")),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    /// FOOTER
+                    const Center(
+                      child: Text(
+                        "COPYRIGHT BY ....",
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 🔸 LOGO
+  Widget _logo(String text) {
+    return Column(
+      children: [
+        Container(
+          width: 35,
+          height: 35,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.image, size: 18, color: Colors.grey),
+        ),
+        const SizedBox(height: 2),
+        Text(text, style: const TextStyle(fontSize: 8)),
+      ],
+    );
+  }
+
+  /// 🔸 BOX
+  Widget _box({required Widget child}) {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      color: Colors.grey[300],
+      child: Center(child: child),
+    );
+  }
+
+  /// 🔸 INPUT BOX
+  Widget _inputBox({double height = 50}) {
+    return Container(
+      width: double.infinity,
+      height: height,
+      color: Colors.grey[300],
+    );
+  }
+
+  /// 🔸 BUTTON
+  Widget _button(String text) {
+    return Container(
+      width: 120,
+      height: 40,
+      color: Colors.grey[300],
+      child: Center(child: Text(text)),
+    );
+  }
+}

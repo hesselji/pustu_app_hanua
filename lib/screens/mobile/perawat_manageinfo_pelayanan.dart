@@ -32,46 +32,82 @@ class InformasiPelayananScreen extends StatelessWidget {
           }
 
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-
-                const Text(
-                  "KELOLA INFORMASI PELAYANAN",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            child: Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(25),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "KELOLA INFORMASI PELAYANAN",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                /// 🔥 TOGGLE
-                Switch(
-                  value: isAvailable,
-                  activeThumbColor: Colors.green,
-                  onChanged: (value) async {
-                    await firestore
-                        .collection('service_status')
-                        .doc('status')
-                        .set({
-                      'isAvailable': value,
-                    });
-                  },
-                ),
+                  /// 🔥 SWITCH (FIXED)
+                  Switch(
+                    value: isAvailable,
 
-                const SizedBox(height: 20),
+                    /// 🔥 MATERIAL 3 STYLE
+                    thumbColor: MaterialStateProperty.resolveWith<Color?>(
+                      (states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return Colors.green;
+                        }
+                        return Colors.grey;
+                      },
+                    ),
+                    trackColor: MaterialStateProperty.resolveWith<Color?>(
+                      (states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return Colors.green.withOpacity(0.5);
+                        }
+                        return Colors.grey.withOpacity(0.3);
+                      },
+                    ),
 
-                /// STATUS TEXT
-                Text(
-                  isAvailable ? "TERSEDIA" : "TIDAK TERSEDIA",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isAvailable ? Colors.green : Colors.red,
+                    onChanged: (value) async {
+                      await firestore
+                          .collection('service_status')
+                          .doc('status')
+                          .set({
+                        'isAvailable': value,
+                      });
+                    },
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 20),
+
+                  /// 🔥 STATUS TEXT
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Text(
+                      isAvailable ? "TERSEDIA" : "TIDAK TERSEDIA",
+                      key: ValueKey(isAvailable),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isAvailable ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },

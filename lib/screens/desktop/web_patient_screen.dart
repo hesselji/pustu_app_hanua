@@ -290,7 +290,7 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
                           headingRowHeight: 55,
                           dataRowHeight: 55,
                           headingRowColor:
-                              MaterialStateProperty.all(Colors.grey.shade100),
+                              WidgetStateProperty.all(Colors.grey.shade100),
 
                           columns: const [
                             DataColumn(label: Text("Nama")),
@@ -311,7 +311,7 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
                             final d = doc.data() as Map<String, dynamic>;
 
                             return DataRow(
-                              color: MaterialStateProperty.resolveWith<Color?>(
+                              color: WidgetStateProperty.resolveWith<Color?>(
                                 (states) => index % 2 == 0
                                     ? Colors.white
                                     : Colors.grey.shade50,
