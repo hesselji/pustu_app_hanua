@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'patient_register_screen.dart';
+import 'about_us.dart';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});
