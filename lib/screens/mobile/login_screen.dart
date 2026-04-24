@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../wrapper/perawat_wrapper.dart';
+import 'home_screen.dart'; // 🔥 pastikan import ini sesuai path kamu
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    FocusScope.of(context).unfocus(); // 🔥 tutup keyboard
+    FocusScope.of(context).unfocus();
 
     setState(() => isLoading = true);
 
@@ -68,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> resetPassword() async {
-    FocusScope.of(context).unfocus(); // 🔥 tutup keyboard
+    FocusScope.of(context).unfocus();
 
     final username = usernameController.text.trim();
 
@@ -131,20 +132,34 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// 🔥 NAVIGASI TANPA ANIMASI (ANTI FLICKER)
+  void goBackNoAnimation() async {
+    if (FocusScope.of(context).hasFocus) {
+      FocusScope.of(context).unfocus();
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const HomeScreen(), // 🔥 tujuan kamu
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        if (FocusScope.of(context).hasFocus) {
-          FocusScope.of(context).unfocus(); // 🔥 tutup keyboard dulu
-          return false; // ❗ jangan langsung back (hindari glitch)
-        }
-        return true;
+        goBackNoAnimation();
+        return false; // ❗ blok pop default
       },
       child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(), // 🔥 tap kosong
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          resizeToAvoidBottomInset: false, // 🔥 penting biar stabil
+          resizeToAvoidBottomInset: false,
           body: SafeArea(
             child: Stack(
               children: [
@@ -154,14 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.arrow_back),
-                        onPressed: () async {
-                          if (FocusScope.of(context).hasFocus) {
-                            FocusScope.of(context).unfocus();
-                            await Future.delayed(
-                                const Duration(milliseconds: 100));
-                          }
-                          Navigator.pop(context);
-                        },
+                        onPressed: goBackNoAnimation, // 🔥 FIX DI SINI
                       ),
 
                       const SizedBox(height: 20),
@@ -261,7 +269,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                /// 🔥 FOOTER (TIDAK DIUBAH POSISINYA)
+                /// 🔥 FOOTER (TETAP)
                 const Positioned(
                   bottom: 10,
                   left: 0,
