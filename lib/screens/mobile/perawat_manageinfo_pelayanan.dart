@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import '../provider/service_status.dart';
+import '/provider/service_status.dart';
 
 class InformasiPelayananScreen extends StatelessWidget {
   const InformasiPelayananScreen({super.key});
