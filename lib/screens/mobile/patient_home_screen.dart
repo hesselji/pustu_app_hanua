@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'patient_register_screen.dart';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});
@@ -65,7 +66,12 @@ class PatientHomeScreen extends StatelessWidget {
                       icon: Icons.medical_services,
                       color: Colors.green,
                       onTap: () {
-                        // TODO: ke halaman pendaftaran
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (_) => const PatientRegisterScreen(),
+                          ),
+                        );
                       },
                     ),
 
