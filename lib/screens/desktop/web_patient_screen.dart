@@ -9,12 +9,16 @@ class WebPatientScreen extends StatefulWidget {
 }
 
 class _WebPatientScreenState extends State<WebPatientScreen> {
+
+  /// 🎨 WARNA PREMIUM
+  final primary = const Color(0xFF0EA5A4);
+  final secondary = const Color(0xFF2563EB);
+
   String search = "";
 
   final ScrollController verticalController = ScrollController();
   final ScrollController horizontalController = ScrollController();
 
-  /// FORM
   final nama = TextEditingController();
   final nik = TextEditingController();
   final alamat = TextEditingController();
@@ -32,7 +36,6 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
   final statusList = ["Belum Menikah", "Menikah", "Cerai"];
   final pendidikanList = ["SD", "SMP", "SMA", "D3", "S1", "S2"];
 
-  /// 🔥 USIA
   void hitungUsia(DateTime birthDate) {
     final now = DateTime.now();
     int age = now.year - birthDate.year;
@@ -45,7 +48,6 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
     usia.text = age.toString();
   }
 
-  /// DATE PICKER
   Future<void> pickDate() async {
     DateTime now = DateTime.now();
 
@@ -62,8 +64,11 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
     }
   }
 
-  /// FORM MODAL
+  /// =========================
+  /// FORM (UPGRADE SECURITY)
+  /// =========================
   void showForm({String? id, Map<String, dynamic>? data}) {
+
     if (data != null) {
       nama.text = data['nama'] ?? "";
       nik.text = data['nik'] ?? "";
@@ -100,6 +105,7 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
+
                 const SizedBox(height: 20),
 
                 _input("Nama", nama),
@@ -130,7 +136,43 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
                 const SizedBox(height: 20),
 
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                  ),
                   onPressed: () async {
+
+                    /// 🔐 KONFIRMASI SIMPAN
+                    final confirmController = TextEditingController();
+
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text("Konfirmasi Simpan"),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text("Ketik 'SIMPAN' untuk melanjutkan"),
+                            TextField(controller: confirmController),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text("Batal")),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (confirmController.text == "SIMPAN") {
+                                Navigator.pop(context, true);
+                              }
+                            },
+                            child: const Text("Lanjut"),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm != true) return;
+
                     final dataMap = {
                       "nama": nama.text,
                       "nik": nik.text,
@@ -157,9 +199,6 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
 
                     Navigator.pop(context);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                  ),
                   child: const Text("Simpan"),
                 )
               ],
@@ -170,27 +209,40 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
     );
   }
 
-  /// DELETE
+  /// =========================
+  /// DELETE SUPER AMAN
+  /// =========================
   void delete(String id) {
+
+    final confirm = TextEditingController();
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Hapus Pasien"),
-        content: const Text("Yakin ingin menghapus data ini?"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Ketik 'HAPUS' untuk melanjutkan"),
+            TextField(controller: confirm),
+          ],
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Batal")),
-          TextButton(
+          ElevatedButton(
             onPressed: () async {
+              if (confirm.text != "HAPUS") return;
+
               await FirebaseFirestore.instance
                   .collection("patients")
                   .doc(id)
                   .delete();
+
               Navigator.pop(context);
             },
-            child:
-                const Text("Hapus", style: TextStyle(color: Colors.red)),
+            child: const Text("Hapus"),
           )
         ],
       ),
@@ -201,6 +253,7 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+
         /// HEADER
         Row(
           children: [
@@ -239,7 +292,7 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
 
         const SizedBox(height: 20),
 
-        /// 🔥 TABLE CARD
+        /// TABLE
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
@@ -257,6 +310,12 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
                 return nama.contains(search);
               }).toList();
 
+              filtered.sort((a, b) {
+                final namaA = (a['nama'] ?? "").toString().toLowerCase();
+                final namaB = (b['nama'] ?? "").toString().toLowerCase();
+                return namaA.compareTo(namaB);
+              });
+
               return Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -269,84 +328,89 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
                   ],
                 ),
 
-                /// 🔥 SCROLLBAR DOUBLE
-                child: Scrollbar(
-                  controller: verticalController,
-                  thumbVisibility: true,
-                  interactive: true,
-                  child: Scrollbar(
-                    controller: horizontalController,
-                    thumbVisibility: true,
-                    interactive: true,
-                    notificationPredicate: (notif) => notif.depth == 1,
-                    child: SingleChildScrollView(
-                      controller: verticalController,
-                      child: SingleChildScrollView(
-                        controller: horizontalController,
-                        scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  controller: horizontalController,
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    controller: verticalController,
+                    child: DataTable(
+                      columnSpacing: 28,
+                      columns: const [
+                        DataColumn(label: Text("Nama")),
+                        DataColumn(label: Text("NIK")),
+                        DataColumn(label: Text("JK")),
+                        DataColumn(label: Text("Tgl")),
+                        DataColumn(label: Text("Usia")),
+                        DataColumn(label: Text("Alamat")),
+                        DataColumn(label: Text("Agama")),
+                        DataColumn(label: Text("Status")),
+                        DataColumn(label: Text("Pendidikan")),
+                        DataColumn(label: Text("Pekerjaan")),
+                        DataColumn(label: Text("Aksi")),
+                      ],
+                      rows: filtered.map((doc) {
+                        final d = doc.data() as Map<String, dynamic>;
 
-                        child: DataTable(
-                          columnSpacing: 28,
-                          headingRowHeight: 55,
-                          dataRowHeight: 55,
-                          headingRowColor:
-                              WidgetStateProperty.all(Colors.grey.shade100),
+                        return DataRow(cells: [
+                          DataCell(Text(d['nama'] ?? "-")),
+                          DataCell(Text(d['nik'] ?? "-")),
+                          DataCell(Text(d['jk'] ?? "-")),
+                          DataCell(Text(d['tgl'] ?? "-")),
+                          DataCell(Text(d['usia'] ?? "-")),
+                          DataCell(Text(d['alamat'] ?? "-")),
+                          DataCell(Text(d['agama'] ?? "-")),
+                          DataCell(Text(d['status'] ?? "-")),
+                          DataCell(Text(d['pendidikan'] ?? "-")),
+                          DataCell(Text(d['pekerjaan'] ?? "-")),
+                          DataCell(Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () async {
 
-                          columns: const [
-                            DataColumn(label: Text("Nama")),
-                            DataColumn(label: Text("NIK")),
-                            DataColumn(label: Text("JK")),
-                            DataColumn(label: Text("Tgl")),
-                            DataColumn(label: Text("Usia")),
-                            DataColumn(label: Text("Alamat")),
-                            DataColumn(label: Text("Agama")),
-                            DataColumn(label: Text("Status")),
-                            DataColumn(label: Text("Pendidikan")),
-                            DataColumn(label: Text("Pekerjaan")),
-                            DataColumn(label: Text("Aksi")),
-                          ],
+                                  /// 🔐 KONFIRMASI EDIT
+                                  final confirm = TextEditingController();
 
-                          rows: List.generate(filtered.length, (index) {
-                            final doc = filtered[index];
-                            final d = doc.data() as Map<String, dynamic>;
+                                  final ok = await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text("Konfirmasi Edit"),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Text("Ketik 'EDIT' untuk lanjut"),
+                                          TextField(controller: confirm),
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () => Navigator.pop(context, false),
+                                            child: const Text("Batal")),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            if (confirm.text == "EDIT") {
+                                              Navigator.pop(context, true);
+                                            }
+                                          },
+                                          child: const Text("Lanjut"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
 
-                            return DataRow(
-                              color: WidgetStateProperty.resolveWith<Color?>(
-                                (states) => index % 2 == 0
-                                    ? Colors.white
-                                    : Colors.grey.shade50,
+                                  if (ok == true) {
+                                    showForm(id: doc.id, data: d);
+                                  }
+                                },
                               ),
-                              cells: [
-                                DataCell(Text(d['nama'] ?? "-")),
-                                DataCell(Text(d['nik'] ?? "-")),
-                                DataCell(Text(d['jk'] ?? "-")),
-                                DataCell(Text(d['tgl'] ?? "-")),
-                                DataCell(Text(d['usia'] ?? "-")),
-                                DataCell(Text(d['alamat'] ?? "-")),
-                                DataCell(Text(d['agama'] ?? "-")),
-                                DataCell(Text(d['status'] ?? "-")),
-                                DataCell(Text(d['pendidikan'] ?? "-")),
-                                DataCell(Text(d['pekerjaan'] ?? "-")),
-                                DataCell(Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      onPressed: () =>
-                                          showForm(id: doc.id, data: d),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () => delete(doc.id),
-                                    ),
-                                  ],
-                                )),
-                              ],
-                            );
-                          }),
-                        ),
-                      ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => delete(doc.id),
+                              ),
+                            ],
+                          )),
+                        ]);
+                      }).toList(),
                     ),
                   ),
                 ),
