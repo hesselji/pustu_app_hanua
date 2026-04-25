@@ -39,7 +39,48 @@ class _PatientRegisterScreenState
   }
 
   ///  ADD STATUS
- 
+  Future<void> kirimData() async {
+  if (dataPasienController.text.isEmpty ||
+      keluhanController.text.isEmpty ||
+      selectedDate == null ||
+      selectedLayanan.isEmpty) {
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Semua field harus diisi!"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  try {
+    await FirebaseFirestore.instance.collection('pendaftaran').add({
+      'data_pasien': dataPasienController.text,
+      'keluhan': keluhanController.text,
+      'tanggal': selectedDate,
+      'layanan': selectedLayanan,
+      'created_at': Timestamp.now(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Berhasil mendaftar!"),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    resetForm();
+
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Gagal: $e"),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+} 
 
   /// 🔥 RESET FORM
   void resetForm() {
@@ -220,7 +261,29 @@ class _PatientRegisterScreenState
                     const SizedBox(height: 30),
                     const Divider(),
 
-
+                    /// BUTTON KIRIM
+                    GestureDetector(
+                      onTap: kirimData,
+                      child: Container(
+                        width: double.infinity,
+                        height: 45,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "KIRIM",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                     
+                    
                     /// 🔥 RESET
                     GestureDetector(
                       onTap: resetForm,
