@@ -37,50 +37,51 @@ class _PatientRegisterScreenState
       });
     }
   }
-
-  ///  ADD STATUS
+  /// ADD DATA
   Future<void> kirimData() async {
-  if (dataPasienController.text.isEmpty ||
-      keluhanController.text.isEmpty ||
-      selectedDate == null ||
-      selectedLayanan.isEmpty) {
+    if (dataPasienController.text.isEmpty ||
+        keluhanController.text.isEmpty ||
+        selectedDate == null ||
+        selectedLayanan.isEmpty) {
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Semua field harus diisi!"),
-        backgroundColor: Colors.red,
-      ),
-    );
-    return;
-  }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Semua field harus diisi!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-  try {
-    await FirebaseFirestore.instance.collection('pendaftaran').add({
-      'data_pasien': dataPasienController.text,
-      'keluhan': keluhanController.text,
-      'tanggal': selectedDate,
-      'layanan': selectedLayanan,
-      'created_at': Timestamp.now(),
-    });
+    try {
+      await FirebaseFirestore.instance.collection('registrations').add({
+        'patient_name': dataPasienController.text, // ✅ nama pasien
+        'nik': dataPasienController.text, // ⚠️ sementara sama (nanti bisa dipisah input)
+        'keluhan': keluhanController.text, // ✅ sudah benar
+        'tanggal': Timestamp.fromDate(selectedDate!), // ✅ wajib timestamp
+        'layanan': selectedLayanan, // ✅ sudah benar
+        'status': "Pending", // ✅ default
+        'created_at': Timestamp.now(), // ✅ waktu dibuat
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Berhasil mendaftar!"),
-        backgroundColor: Colors.green,
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Berhasil mendaftar!"),
+          backgroundColor: Colors.green,
+        ),
+      );
 
-    resetForm();
+      resetForm();
 
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Gagal: $e"),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-} 
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } 
 
   /// 🔥 RESET FORM
   void resetForm() {
