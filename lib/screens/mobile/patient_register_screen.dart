@@ -1,8 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class PatientRegisterScreen extends StatelessWidget {
+class PatientRegisterScreen extends StatefulWidget {
   const PatientRegisterScreen({super.key});
+
+  @override
+  State<PatientRegisterScreen> createState() =>
+      _PatientRegisterScreenState();
+}
+
+class _PatientRegisterScreenState
+    extends State<PatientRegisterScreen> {
+
+  /// 🔥 CONTROLLER INPUT
+  final TextEditingController dataPasienController =
+      TextEditingController();
+  final TextEditingController keluhanController =
+      TextEditingController();
+
+  /// 🔥 STATE
+  DateTime? selectedDate;
+  String selectedLayanan = "";
+
+  /// 🔥 DATE PICKER
+  Future<void> pilihTanggal() async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2030),
+    );
+
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
+
+  ///  ADD STATUS
+ 
+
+  /// 🔥 RESET FORM
+  void resetForm() {
+    setState(() {
+      dataPasienController.clear();
+      keluhanController.clear();
+      selectedDate = null;
+      selectedLayanan = "";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,37 +58,29 @@ class PatientRegisterScreen extends StatelessWidget {
         child: Column(
           children: [
 
-            /// 🔹 HEADER
+            /// HEADER (tetap)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
-
                   const Spacer(),
-
                   _logo("Kemenkes"),
                   const SizedBox(width: 10),
                   _logo("Pustu"),
-
                   const Spacer(),
-
-                  const Text(
-                    "Pustu Hanua",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  const Text("Pustu Hanua",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
 
             const Divider(),
 
-            /// 🔹 CONTENT
+            /// CONTENT
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -51,20 +90,17 @@ class PatientRegisterScreen extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    /// TITLE
                     const Center(
                       child: Text(
                         "FORM DAFTAR BEROBAT",
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
 
                     const SizedBox(height: 20),
 
-                    /// 🔥 STATUS REAL-TIME FIRESTORE
+                    /// 🔥 STATUS FIRESTORE (tetap)
                     StreamBuilder<DocumentSnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('service_status')
@@ -73,18 +109,13 @@ class PatientRegisterScreen extends StatelessWidget {
                       builder: (context, snapshot) {
 
                         if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const CircularProgressIndicator();
                         }
 
-                        final data =
-                            snapshot.data!.data() as Map<String, dynamic>?;
+                        final data = snapshot.data!.data()
+                            as Map<String, dynamic>?;
 
-                        bool isAvailable = true;
-
-                        if (data != null &&
-                            data.containsKey('isAvailable')) {
-                          isAvailable = data['isAvailable'];
-                        }
+                        bool isAvailable = data?['isAvailable'] ?? true;
 
                         return Row(
                           children: [
@@ -109,9 +140,7 @@ class PatientRegisterScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-
                             const SizedBox(width: 10),
-
                             Expanded(
                               child: _box(
                                 child: Text(
@@ -119,10 +148,10 @@ class PatientRegisterScreen extends StatelessWidget {
                                       ? "Tersedia"
                                       : "Tidak Tersedia",
                                   style: TextStyle(
-                                    fontWeight: FontWeight.bold,
                                     color: isAvailable
                                         ? Colors.green
                                         : Colors.red,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
@@ -135,39 +164,53 @@ class PatientRegisterScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     const Divider(),
 
-                    /// DATA PASIEN
+                    /// 🔥 DATA PASIEN
                     const Text("Data Pasien"),
                     const SizedBox(height: 10),
-                    _inputBox(),
+                    _inputField(controller: dataPasienController),
 
                     const SizedBox(height: 20),
                     const Divider(),
 
-                    /// KELUHAN
+                    /// 🔥 KELUHAN
                     const Text("Keluhan Pasien"),
                     const SizedBox(height: 10),
-                    _inputBox(height: 80),
+                    _inputField(
+                        controller: keluhanController, height: 80),
 
                     const SizedBox(height: 20),
                     const Divider(),
 
-                    /// TANGGAL
+                    /// 🔥 TANGGAL
                     const Text("Tanggal Berobat"),
                     const SizedBox(height: 10),
-                    _inputBox(),
+                    GestureDetector(
+                      onTap: pilihTanggal,
+                      child: Container(
+                        height: 50,
+                        color: Colors.grey[300],
+                        alignment: Alignment.centerLeft,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          selectedDate == null
+                              ? "Pilih tanggal"
+                              : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                        ),
+                      ),
+                    ),
 
                     const SizedBox(height: 20),
                     const Divider(),
 
-                    /// JENIS LAYANAN
-                    const Center(
-                      child: Text("Pilih Jenis Layanan"),
-                    ),
+                    /// 🔥 JENIS LAYANAN
+                    const Center(child: Text("Pilih Jenis Layanan")),
 
                     const SizedBox(height: 15),
 
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceEvenly,
                       children: [
                         _button("Home Care"),
                         _button("Pustu Visit"),
@@ -177,25 +220,25 @@ class PatientRegisterScreen extends StatelessWidget {
                     const SizedBox(height: 30),
                     const Divider(),
 
-                    /// BUTTON BERSIHKAN
+
+                    /// 🔥 RESET
                     GestureDetector(
-                      onTap: () {},
+                      onTap: resetForm,
                       child: Container(
                         width: double.infinity,
                         height: 40,
                         color: Colors.grey[300],
-                        child: const Center(child: Text("BERSIHKAN")),
+                        child: const Center(
+                          child: Text("BERSIHKAN"),
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 30),
 
-                    /// FOOTER
                     const Center(
-                      child: Text(
-                        "COPYRIGHT BY ....",
-                        style: TextStyle(fontSize: 12),
-                      ),
+                      child: Text("COPYRIGHT BY ....",
+                          style: TextStyle(fontSize: 12)),
                     ),
 
                     const SizedBox(height: 20),
@@ -204,6 +247,49 @@ class PatientRegisterScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// 🔸 INPUT FIELD
+  Widget _inputField(
+      {required TextEditingController controller, double height = 50}) {
+    return Container(
+      height: height,
+      color: Colors.grey[300],
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: TextField(
+        controller: controller,
+        decoration: const InputDecoration(border: InputBorder.none),
+      ),
+    );
+  }
+
+  /// 🔸 BUTTON PILIH LAYANAN
+  Widget _button(String text) {
+    bool isSelected = selectedLayanan == text;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedLayanan = text;
+        });
+      },
+      child: Container(
+        width: 120,
+        height: 40,
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green : Colors.grey[300],
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black,
+            ),
+          ),
         ),
       ),
     );
@@ -220,7 +306,8 @@ class PatientRegisterScreen extends StatelessWidget {
             color: Colors.grey[300],
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.image, size: 18, color: Colors.grey),
+          child:
+              const Icon(Icons.image, size: 18, color: Colors.grey),
         ),
         const SizedBox(height: 2),
         Text(text, style: const TextStyle(fontSize: 8)),
@@ -228,32 +315,13 @@ class PatientRegisterScreen extends StatelessWidget {
     );
   }
 
-  /// 🔸 BOX
+  /// 🔸 BOX STATUS
   Widget _box({required Widget child}) {
     return Container(
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       color: Colors.grey[300],
       child: Center(child: child),
-    );
-  }
-
-  /// 🔸 INPUT BOX
-  Widget _inputBox({double height = 50}) {
-    return Container(
-      width: double.infinity,
-      height: height,
-      color: Colors.grey[300],
-    );
-  }
-
-  /// 🔸 BUTTON
-  Widget _button(String text) {
-    return Container(
-      width: 120,
-      height: 40,
-      color: Colors.grey[300],
-      child: Center(child: Text(text)),
     );
   }
 }
