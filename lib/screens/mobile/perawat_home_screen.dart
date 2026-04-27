@@ -7,7 +7,7 @@ import 'patient_list_screen.dart';
 import 'perawat_manageinfo_pelayanan.dart';
 import 'perawat_laporanBulanan.dart';
 import 'medical_patient_list_screen.dart';
-import 'perawat_kelolaPendaftaran_screen.dart';
+import 'perawat_kelolaPendaftaran.dart';
 
 class PerawatHomeScreen extends StatefulWidget {
   const PerawatHomeScreen({super.key});
