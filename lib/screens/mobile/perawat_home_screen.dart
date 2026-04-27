@@ -31,11 +31,12 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
 
     if (user == null) return;
 
-    final query = await FirebaseFirestore.instance
-        .collection('users')
-        .where('email', isEqualTo: user.email)
-        .limit(1)
-        .get();
+    final query =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .where('email', isEqualTo: user.email)
+            .limit(1)
+            .get();
 
     if (query.docs.isNotEmpty) {
       setState(() {
@@ -104,28 +105,23 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                       children: [
                         const Text(
                           "Selamat datang 👋",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                         const SizedBox(height: 4),
 
                         /// 🔥 TAMPILKAN USERNAME
                         isLoading
                             ? const SizedBox(
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                             : Text(
-                                username.isEmpty ? "-" : username,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                              username.isEmpty ? "-" : username,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
+                            ),
                       ],
                     ),
                   ),
@@ -162,8 +158,8 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const PerawatKelolaPendaftaranScreen(),
+                          builder:
+                              (_) => const PerawatKelolaPendaftaranScreen(),
                         ),
                       );
                     },
@@ -187,8 +183,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const MedicalPatientListScreen(),
+                          builder: (_) => const MedicalPatientListScreen(),
                         ),
                       );
                     },
@@ -200,8 +195,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const InformasiPelayananScreen(),
+                          builder: (_) => const InformasiPelayananScreen(),
                         ),
                       );
                     },
@@ -280,8 +274,11 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               ],
             ),
           ),
@@ -293,29 +290,30 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Konfirmasi"),
-        content: const Text("Yakin ingin logout?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Batal"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Konfirmasi"),
+            content: const Text("Yakin ingin logout?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Batal"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
 
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const HomeScreen()),
-                (route) => false,
-              );
-            },
-            child: const Text("Logout"),
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    (route) => false,
+                  );
+                },
+                child: const Text("Logout"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

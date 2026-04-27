@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class RekapanBulananPage extends StatefulWidget {
@@ -8,7 +9,9 @@ class RekapanBulananPage extends StatefulWidget {
 }
 
 class _RekapanBulananPageState extends State<RekapanBulananPage> {
-  final List<String> bulanList = [
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  final List<String> bulanList = const [
     "Januari",
     "Februari",
     "Maret",
@@ -26,12 +29,29 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   String? selectedBulan;
   int? selectedTahun;
 
-  /// 🔥 INI KUNCI FIX
   String? submittedBulan;
   int? submittedTahun;
 
+  bool loading = false;
   bool showResult = false;
   bool noData = false;
+
+  /// 🔥 DATA LAPORAN
+  int totalPasien = 0;
+  int totalKunjungan = 0;
+  int laki = 0;
+  int perempuan = 0;
+
+  Map<String, int> umurMap = {
+    "Bayi (0–11 bulan)": 0,
+    "Anak (1–9 tahun)": 0,
+    "Remaja (10–18 tahun)": 0,
+    "Pemuda (19–29 tahun)": 0,
+    "Dewasa (30–59 tahun)": 0,
+    "Lansia (≥60)": 0,
+  };
+
+  Map<String, int> penyakitMap = {};
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +65,8 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back),
                     onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back),
                   ),
                   _logo(),
                   const SizedBox(width: 6),
@@ -85,21 +105,20 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
+                              value: selectedBulan,
                               decoration: const InputDecoration(
                                 labelText: "Bulan",
                                 border: OutlineInputBorder(),
                               ),
-                              value: selectedBulan,
-                              menuMaxHeight: 300,
                               items:
-                                  bulanList.map((b) {
+                                  bulanList.map((e) {
                                     return DropdownMenuItem(
-                                      value: b,
-                                      child: Text(b),
+                                      value: e,
+                                      child: Text(e),
                                     );
                                   }).toList(),
-                              onChanged: (value) {
-                                setState(() => selectedBulan = value);
+                              onChanged: (val) {
+                                setState(() => selectedBulan = val);
                               },
                             ),
                           ),
@@ -108,20 +127,20 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
                           Expanded(
                             child: DropdownButtonFormField<int>(
+                              value: selectedTahun,
                               decoration: const InputDecoration(
                                 labelText: "Tahun",
                                 border: OutlineInputBorder(),
                               ),
-                              value: selectedTahun,
                               items:
-                                  [2025, 2026].map((year) {
+                                  _tahunList().map((e) {
                                     return DropdownMenuItem(
-                                      value: year,
-                                      child: Text(year.toString()),
+                                      value: e,
+                                      child: Text(e.toString()),
                                     );
                                   }).toList(),
-                              onChanged: (value) {
-                                setState(() => selectedTahun = value);
+                              onChanged: (val) {
+                                setState(() => selectedTahun = val);
                               },
                             ),
                           ),
@@ -131,30 +150,13 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
                     const SizedBox(height: 15),
 
-                    /// BUTTON
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
-                        onPressed: () {
-                          if (selectedBulan != null && selectedTahun != null) {
-                            setState(() {
-                              /// 🔥 SIMPAN HASIL SUBMIT
-                              submittedBulan = selectedBulan;
-                              submittedTahun = selectedTahun;
-
-                              if (submittedTahun == 2025) {
-                                noData = true;
-                                showResult = false;
-                              } else {
-                                noData = false;
-                                showResult = true;
-                              }
-                            });
-                          }
-                        },
+                        onPressed: loading ? null : _submitLaporan,
                         child: const Text(
                           "KIRIM",
                           style: TextStyle(color: Colors.black),
@@ -164,19 +166,23 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
                     const SizedBox(height: 20),
 
-                    /// ❌ NO DATA
+                    if (loading) const CircularProgressIndicator(),
+
                     if (noData)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
                           "Tidak Ada Data Rekapan Bulanan Pada Bulan $submittedBulan Tahun $submittedTahun",
-                          style: const TextStyle(color: Colors.red),
                           textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
 
-                    /// ✅ RESULT
                     if (showResult) ...[
+                      /// TOTAL BOX
                       Container(
                         width: double.infinity,
                         margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -187,11 +193,35 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
                         ),
                         child: Column(
                           children: [
-                            _rowBetween("Total Pasien", "35 orang", bold: true),
-                            const SizedBox(height: 10),
+                            _rowBetween(
+                              "Total Kunjungan Pasien",
+                              "$totalKunjungan kunjungan",
+                              bold: true,
+                            ),
 
-                            _barRow("Laki-laki", 20, 35, Colors.blue),
-                            _barRow("Perempuan", 15, 35, Colors.pink),
+                            const SizedBox(height: 8),
+
+                            _rowBetween(
+                              "Total Pasien",
+                              "$totalPasien orang",
+                              bold: true,
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            _barRow(
+                              "Laki-laki",
+                              laki,
+                              totalPasien,
+                              Colors.blue,
+                            ),
+
+                            _barRow(
+                              "Perempuan",
+                              perempuan,
+                              totalPasien,
+                              Colors.pink,
+                            ),
                           ],
                         ),
                       ),
@@ -200,45 +230,25 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
                       _sectionTitle("Rentang Umur Pasien"),
 
-                      _simpleRow(
-                        "Bayi (0–11 bulan)",
-                        "5 orang",
-                        Colors.orange[100]!,
-                      ),
-                      _simpleRow(
-                        "Anak (1–9 tahun)",
-                        "10 orang",
-                        Colors.orange[100]!,
-                      ),
-                      _simpleRow(
-                        "Remaja (10–18 tahun)",
-                        "7 orang",
-                        Colors.orange[100]!,
-                      ),
-                      _simpleRow(
-                        "Pemuda (19–29 tahun)",
-                        "6 orang",
-                        Colors.orange[100]!,
-                      ),
-                      _simpleRow(
-                        "Dewasa (30–59 tahun)",
-                        "5 orang",
-                        Colors.orange[100]!,
-                      ),
-                      _simpleRow(
-                        "Lansia (≥60)",
-                        "2 orang",
-                        Colors.orange[100]!,
-                      ),
+                      ...umurMap.entries.map((e) {
+                        return _simpleRow(
+                          e.key,
+                          "${e.value} orang",
+                          Colors.orange[100]!,
+                        );
+                      }),
 
                       const SizedBox(height: 20),
 
-                      _sectionTitle("Daftar Penyakit / Perawatan"),
+                      _sectionTitle("Daftar Diagnosis Penyakit"),
 
-                      _simpleRow("ISPA", "5 orang", Colors.grey[400]!),
-                      _simpleRow("Demam", "3 orang", Colors.grey[400]!),
-                      _simpleRow("Hipertensi", "4 orang", Colors.grey[400]!),
-                      _simpleRow("Diare", "1 orang", Colors.grey[400]!),
+                      ...penyakitMap.entries.map((e) {
+                        return _simpleRow(
+                          e.key,
+                          "${e.value} diagnosis",
+                          Colors.grey[400]!,
+                        );
+                      }),
                     ],
 
                     const SizedBox(height: 30),
@@ -260,6 +270,167 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     );
   }
 
+  /// ===================================================
+  /// FIREBASE LOGIC
+  /// ===================================================
+
+  Future<void> _submitLaporan() async {
+    if (selectedBulan == null || selectedTahun == null) return;
+
+    setState(() {
+      submittedBulan = selectedBulan;
+      submittedTahun = selectedTahun;
+      loading = true;
+      showResult = false;
+      noData = false;
+    });
+
+    if (submittedTahun == 2025) {
+      setState(() {
+        loading = false;
+        noData = true;
+      });
+      return;
+    }
+
+    totalPasien = 0;
+    totalKunjungan = 0;
+    laki = 0;
+    perempuan = 0;
+
+    umurMap.updateAll((key, value) => 0);
+    penyakitMap.clear();
+
+    Set<String> pasienUnik = {};
+
+    int bulanAngka = bulanList.indexOf(submittedBulan!) + 1;
+
+    final patients = await firestore.collection("patients").get();
+
+    for (var patient in patients.docs) {
+      final data = patient.data();
+
+      String jk = data["jk"] ?? "";
+      String tgl = data["tgl"] ?? "";
+
+      bool pasienSudahDihitung = false;
+
+      final medicals =
+          await firestore
+              .collection("patients")
+              .doc(patient.id)
+              .collection("medical_records")
+              .get();
+
+      for (var med in medicals.docs) {
+        final m = med.data();
+
+        if (m["is_deleted"] == true) continue;
+
+        Timestamp? created = m["created_at"];
+        if (created == null) continue;
+
+        DateTime dt = created.toDate();
+
+        if (dt.month == bulanAngka && dt.year == submittedTahun) {
+          /// total kunjungan
+          totalKunjungan++;
+
+          /// pasien unik
+          pasienUnik.add(patient.id);
+
+          /// gender + umur hanya sekali per pasien
+          if (!pasienSudahDihitung) {
+            pasienSudahDihitung = true;
+
+            if (jk.toLowerCase().contains("laki")) {
+              laki++;
+            } else {
+              perempuan++;
+            }
+
+            int umur = hitungUmur(tgl);
+            kategoriUmur(umur);
+          }
+
+          /// diagnosa
+          String diagnosa = (m["diagnosa"] ?? "").toString().trim();
+
+          if (diagnosa.isNotEmpty) {
+            diagnosa = normalisasiDiagnosa(diagnosa);
+
+            penyakitMap[diagnosa] = (penyakitMap[diagnosa] ?? 0) + 1;
+          }
+        }
+      }
+    }
+
+    totalPasien = pasienUnik.length;
+
+    penyakitMap = Map.fromEntries(
+      penyakitMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+    );
+
+    setState(() {
+      loading = false;
+
+      if (totalKunjungan == 0) {
+        noData = true;
+      } else {
+        showResult = true;
+      }
+    });
+  }
+
+  List<int> _tahunList() {
+    int now = DateTime.now().year;
+    List<int> data = [2025];
+
+    for (int i = 2026; i <= now; i++) {
+      data.add(i);
+    }
+
+    return data;
+  }
+
+  int hitungUmur(String tgl) {
+    try {
+      List<String> p = tgl.split("-");
+      int tahun = int.parse(p[2].trim());
+      return DateTime.now().year - tahun;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  void kategoriUmur(int usia) {
+    if (usia < 1) {
+      umurMap["Bayi (0–11 bulan)"] = umurMap["Bayi (0–11 bulan)"]! + 1;
+    } else if (usia <= 9) {
+      umurMap["Anak (1–9 tahun)"] = umurMap["Anak (1–9 tahun)"]! + 1;
+    } else if (usia <= 18) {
+      umurMap["Remaja (10–18 tahun)"] = umurMap["Remaja (10–18 tahun)"]! + 1;
+    } else if (usia <= 29) {
+      umurMap["Pemuda (19–29 tahun)"] = umurMap["Pemuda (19–29 tahun)"]! + 1;
+    } else if (usia <= 59) {
+      umurMap["Dewasa (30–59 tahun)"] = umurMap["Dewasa (30–59 tahun)"]! + 1;
+    } else {
+      umurMap["Lansia (≥60)"] = umurMap["Lansia (≥60)"]! + 1;
+    }
+  }
+
+  String normalisasiDiagnosa(String text) {
+    text = text.trim().toLowerCase();
+
+    if (text.isEmpty) return text;
+
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
+  /// ===================================================
+  /// UI HELPER
+  /// ===================================================
+
   Widget _rowBetween(String left, String right, {bool bold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -274,7 +445,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   }
 
   Widget _barRow(String label, int value, int total, Color color) {
-    double percent = value / total;
+    double percent = total == 0 ? 0 : value / total;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
