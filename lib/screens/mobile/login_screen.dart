@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../wrapper/perawat_wrapper.dart';
-import 'home_screen.dart'; // 🔥 pastikan import ini sesuai path kamu
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,11 +20,28 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isObscure = true;
   bool isLoading = false;
 
+  bool _isSubmitted = false; // 🔥 FLAG UTAMA
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// 🔥 HILANGKAN ERROR SAAT NGETIK (SETELAH SUBMIT)
+    usernameController.addListener(() {
+      if (_isSubmitted) _formKey.currentState!.validate();
+    });
+
+    passwordController.addListener(() {
+      if (_isSubmitted) _formKey.currentState!.validate();
+    });
+  }
+
   Future<void> login() async {
+    setState(() => _isSubmitted = true); // 🔥 AKTIFKAN VALIDASI
+
     if (!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
-
     setState(() => isLoading = true);
 
     try {
@@ -132,7 +149,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// 🔥 NAVIGASI TANPA ANIMASI (ANTI FLICKER)
   void goBackNoAnimation() async {
     if (FocusScope.of(context).hasFocus) {
       FocusScope.of(context).unfocus();
@@ -142,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const HomeScreen(), // 🔥 tujuan kamu
+        pageBuilder: (_, __, ___) => const HomeScreen(),
         transitionDuration: Duration.zero,
         reverseTransitionDuration: Duration.zero,
       ),
@@ -154,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return WillPopScope(
       onWillPop: () async {
         goBackNoAnimation();
-        return false; // ❗ blok pop default
+        return false;
       },
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -169,25 +185,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.arrow_back),
-                        onPressed: goBackNoAnimation, // 🔥 FIX DI SINI
+                        onPressed: goBackNoAnimation,
                       ),
-
                       const SizedBox(height: 20),
-
-                      const Icon(
-                        Icons.local_hospital,
-                        size: 80,
-                        color: Colors.green,
-                      ),
-
+                      const Icon(Icons.local_hospital,
+                          size: 80, color: Colors.green),
                       const SizedBox(height: 10),
-
-                      const Text(
-                        "Login Perawat",
-                        style: TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
-                      ),
-
+                      const Text("Login Perawat",
+                          style: TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 30),
 
                       Form(
@@ -218,11 +224,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 labelText: "Password",
                                 prefixIcon: const Icon(Icons.lock),
                                 suffixIcon: IconButton(
-                                  icon: Icon(
-                                    isObscure
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
+                                  icon: Icon(isObscure
+                                      ? Icons.visibility_off
+                                      : Icons.visibility),
                                   onPressed: () {
                                     setState(() {
                                       isObscure = !isObscure;
@@ -257,8 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     isLoading ? null : login,
                                 child: isLoading
                                     ? const CircularProgressIndicator(
-                                        color: Colors.white,
-                                      )
+                                        color: Colors.white)
                                     : const Text("LOGIN"),
                               ),
                             ),
@@ -269,7 +272,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                /// 🔥 FOOTER (TETAP)
                 const Positioned(
                   bottom: 10,
                   left: 0,
@@ -277,8 +279,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Center(
                     child: Text(
                       "© Pustu Hanua 2026",
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ),
                 ),

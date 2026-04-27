@@ -64,17 +64,17 @@ class InformasiPelayananScreen extends StatelessWidget {
                     value: isAvailable,
 
                     /// 🔥 MATERIAL 3 STYLE
-                    thumbColor: MaterialStateProperty.resolveWith<Color?>(
+                    thumbColor: WidgetStateProperty.resolveWith<Color?>(
                       (states) {
-                        if (states.contains(MaterialState.selected)) {
+                        if (states.contains(WidgetState.selected)) {
                           return Colors.green;
                         }
                         return Colors.grey;
                       },
                     ),
-                    trackColor: MaterialStateProperty.resolveWith<Color?>(
+                    trackColor: WidgetStateProperty.resolveWith<Color?>(
                       (states) {
-                        if (states.contains(MaterialState.selected)) {
+                        if (states.contains(WidgetState.selected)) {
                           return Colors.green.withOpacity(0.5);
                         }
                         return Colors.grey.withOpacity(0.3);

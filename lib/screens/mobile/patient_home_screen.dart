@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'patient_register_screen.dart';
+import 'patient_cekberobat_screen.dart';
 import 'about_us.dart';
 
 class PatientHomeScreen extends StatelessWidget {
@@ -78,7 +79,12 @@ class PatientHomeScreen extends StatelessWidget {
                       icon: Icons.list_alt,
                       color: Colors.blue,
                       onTap: () {
-                        // TODO: ke halaman list
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PatientCheckScreen(),
+                          ),
+                        );
                       },
                     ),
 

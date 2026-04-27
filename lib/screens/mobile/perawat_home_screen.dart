@@ -1,23 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'home_screen.dart';
 import 'patient_list_screen.dart';
 import 'perawat_manageinfo_pelayanan.dart';
-import 'perawat_laporanBulanan.dart'; // ✅ TAMBAHAN
+import 'perawat_laporanBulanan.dart';
 import 'medical_patient_list_screen.dart';
 import 'perawat_kelolaPendaftaran_screen.dart';
 
-class PerawatHomeScreen extends StatelessWidget {
+class PerawatHomeScreen extends StatefulWidget {
   const PerawatHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<PerawatHomeScreen> createState() => _PerawatHomeScreenState();
+}
+
+class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
+  String username = "";
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUser();
+  }
+
+  Future<void> fetchUser() async {
     final user = FirebaseAuth.instance.currentUser;
 
+    if (user == null) return;
+
+    final query = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: user.email)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      setState(() {
+        username = query.docs.first['username'] ?? "";
+        isLoading = false;
+      });
+    } else {
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
 
-      /// 🔝 APP BAR
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -32,53 +66,83 @@ class PerawatHomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const HomeScreen()),
-                (route) => false,
-              );
-            },
+            onPressed: () => _confirmLogout(context),
           ),
         ],
       ),
 
-      /// 📱 BODY
       body: SafeArea(
         child: Column(
           children: [
-            /// 🧑 HEADER USER
+            /// 🔥 HEADER
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Column(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+              ),
+              child: Row(
                 children: [
-                  const Text(
-                    "BERANDA PERAWAT",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.person, color: Colors.green),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    user?.email ?? "",
-                    style: const TextStyle(color: Colors.grey),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Selamat datang 👋",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+
+                        /// 🔥 TAMPILKAN USERNAME
+                        isLoading
+                            ? const SizedBox(
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                username.isEmpty ? "-" : username,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const Divider(),
+            const SizedBox(height: 16),
 
-            /// 🔹 LABEL MENU
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "All Menu",
+                  "Menu Utama",
                   style: TextStyle(
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: Colors.black54,
                   ),
                 ),
@@ -87,12 +151,10 @@ class PerawatHomeScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            /// 📋 LIST MENU
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  /// 🔹 Kelola Pendaftaran
                   _menuCard(
                     icon: Icons.assignment,
                     title: "Kelola Pendaftaran",
@@ -100,14 +162,12 @@ class PerawatHomeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (_) => const PerawatKelolaPendaftaranScreen(),
+                          builder: (_) =>
+                              const PerawatKelolaPendaftaranScreen(),
                         ),
                       );
                     },
                   ),
-
-                  /// 🔹 Data Pasien
                   _menuCard(
                     icon: Icons.people,
                     title: "Kelola Data Pasien",
@@ -120,8 +180,6 @@ class PerawatHomeScreen extends StatelessWidget {
                       );
                     },
                   ),
-
-                  /// 🔹 Rekam Medis
                   _menuCard(
                     icon: Icons.medical_services,
                     title: "Kelola Rekam Medis",
@@ -129,13 +187,12 @@ class PerawatHomeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const MedicalPatientListScreen(),
+                          builder: (_) =>
+                              const MedicalPatientListScreen(),
                         ),
                       );
                     },
                   ),
-
-                  /// 🔹 Informasi Pelayanan
                   _menuCard(
                     icon: Icons.info,
                     title: "Informasi Pelayanan",
@@ -143,13 +200,12 @@ class PerawatHomeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const InformasiPelayananScreen(),
+                          builder: (_) =>
+                              const InformasiPelayananScreen(),
                         ),
                       );
                     },
                   ),
-
-                  /// 🔥 Laporan Bulanan (SUDAH TERHUBUNG)
                   _menuCard(
                     icon: Icons.bar_chart,
                     title: "Laporan Bulanan",
@@ -166,7 +222,6 @@ class PerawatHomeScreen extends StatelessWidget {
               ),
             ),
 
-            /// 🔻 FOOTER
             const Padding(
               padding: EdgeInsets.all(12),
               child: Text(
@@ -180,7 +235,6 @@ class PerawatHomeScreen extends StatelessWidget {
     );
   }
 
-  /// 🔥 WIDGET CARD MENU
   Widget _menuCard({
     required IconData icon,
     required String title,
@@ -188,31 +242,79 @@ class PerawatHomeScreen extends StatelessWidget {
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.green),
-              const SizedBox(width: 10),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-            ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: Colors.green),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Konfirmasi"),
+        content: const Text("Yakin ingin logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+                (route) => false,
+              );
+            },
+            child: const Text("Logout"),
+          ),
+        ],
       ),
     );
   }
