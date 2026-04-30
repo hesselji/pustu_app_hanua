@@ -268,7 +268,7 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
         Row(
           children: [
             _statCard("Total Pasien", Icons.people, "patients"),
-            _statCard("Rekam Medis", Icons.medical_services, "medical_records"),
+            _rekamMedisCard(),
             _todayPatientCard(),
           ],
         ),
@@ -596,7 +596,11 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
               stream:
                   FirebaseFirestore.instance.collection(collection).snapshots(),
               builder: (context, snapshot) {
-                int total = snapshot.data?.docs.length ?? 0;
+                if (!snapshot.hasData) {
+                  return const Text("0", style: TextStyle(color: Colors.white));
+                }
+
+                final total = snapshot.data!.docs.length;
 
                 return Text(
                   "$total",
@@ -617,9 +621,64 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
     );
   }
 
+  Widget _rekamMedisCard() {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(right: 15),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            colors: [Colors.green.shade400, Colors.green.shade600],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.medical_services, color: Colors.white),
+            const SizedBox(height: 10),
+
+         FutureBuilder<QuerySnapshot>(
+  future: FirebaseFirestore.instance
+      .collectionGroup("medical_records")
+      .get(), // 🔥 ambil semua dulu
+  builder: (context, snapshot) {
+    if (!snapshot.hasData) {
+      return const Text("0",
+          style: TextStyle(color: Colors.white));
+    }
+
+    final docs = snapshot.data!.docs;
+
+    /// 🔥 FILTER DI SINI (INI YANG BARU)
+    final filtered = docs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return data['is_deleted'] != true;
+    }).toList();
+
+    final total = filtered.length;
+
+    return Text(
+      "$total",
+      style: const TextStyle(
+        fontSize: 26,
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  },
+),
+
+            const SizedBox(height: 5),
+            const Text("Rekam Medis", style: TextStyle(color: Colors.white70)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _todayPatientCard() {
     final today = DateTime.now();
-    final todayString = "${today.day} - ${today.month} - ${today.year}";
 
     return Expanded(
       child: Container(
@@ -636,15 +695,26 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
 
             StreamBuilder<QuerySnapshot>(
               stream:
-                  FirebaseFirestore.instance.collection("patients").snapshots(),
+                  FirebaseFirestore.instance
+                      .collection("registrations")
+                      .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Text("-");
+                if (!snapshot.hasData) {
+                  return const Text("-");
+                }
 
                 final docs = snapshot.data!.docs;
 
                 final count =
                     docs.where((doc) {
-                      return doc['tgl'] == todayString;
+                      final data = doc.data() as Map<String, dynamic>;
+                      if (data['tanggal'] == null) return false;
+
+                      DateTime tgl = (data['tanggal'] as Timestamp).toDate();
+
+                      return tgl.day == today.day &&
+                          tgl.month == today.month &&
+                          tgl.year == today.year;
                     }).length;
 
                 return Text(
