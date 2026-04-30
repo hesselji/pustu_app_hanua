@@ -13,8 +13,8 @@ class _PatientRegisterScreenState
     extends State<PatientRegisterScreen> {
 
   /// 🔥 CONTROLLER INPUT
-  final TextEditingController dataPasienController =
-      TextEditingController();
+  final TextEditingController namaController = TextEditingController();
+  final TextEditingController nikController = TextEditingController();
   final TextEditingController keluhanController =
       TextEditingController();
 
@@ -52,56 +52,69 @@ class _PatientRegisterScreenState
       });
     }
   }
-  /// ADD DATA
+
+  /// Tambah Data
   Future<void> kirimData() async {
-    if (dataPasienController.text.isEmpty ||
-        keluhanController.text.isEmpty ||
-        selectedDate == null ||
-        selectedLayanan.isEmpty) {
+  if (namaController.text.isEmpty ||
+      nikController.text.isEmpty ||
+      keluhanController.text.isEmpty ||
+      selectedDate == null ||
+      selectedTime == null ||
+      selectedLayanan.isEmpty) {
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Semua field harus diisi!"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Semua field harus diisi!"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
 
-    try {
-      await FirebaseFirestore.instance.collection('registrations').add({
-        'patient_name': dataPasienController.text, // ✅ nama pasien
-        'nik': dataPasienController.text, // ⚠️ sementara sama (nanti bisa dipisah input)
-        'keluhan': keluhanController.text, // ✅ sudah benar
-        'tanggal': Timestamp.fromDate(selectedDate!), // ✅ wajib timestamp
-        'layanan': selectedLayanan, // ✅ sudah benar
-        'status': "Pending", // ✅ default
-        'created_at': Timestamp.now(), // ✅ waktu dibuat
-      });
+  try {
+    /// 🔥 GABUNGKAN TANGGAL + JAM
+    DateTime finalDateTime = DateTime(
+      selectedDate!.year,
+      selectedDate!.month,
+      selectedDate!.day,
+      selectedTime!.hour,
+      selectedTime!.minute,
+    );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Berhasil mendaftar!"),
-          backgroundColor: Colors.green,
-        ),
-      );
+    await FirebaseFirestore.instance.collection('registrations').add({
+      'patient_name': namaController.text,
+      'nik': nikController.text,
+      'keluhan': keluhanController.text,
+      'tanggal': Timestamp.fromDate(finalDateTime),
+      'layanan': selectedLayanan,
+      'status': "Pending",
+      'created_at': Timestamp.now(),
+    });
 
-      resetForm();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Berhasil mendaftar!"),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  } 
+    resetForm();
+
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Gagal: $e"),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
 
   /// 🔥 RESET FORM
   void resetForm() {
     setState(() {
-      dataPasienController.clear();
+      nikController.clear();
+      namaController.clear();
       keluhanController.clear();
       selectedDate = null;
       selectedTime = null;
@@ -223,9 +236,17 @@ class _PatientRegisterScreenState
                     const Divider(),
 
                     /// 🔥 DATA PASIEN
-                    const Text("Data Pasien"),
+                    /// NAMA
+                    const Text("Nama Pasien"),
                     const SizedBox(height: 10),
-                    _inputField(controller: dataPasienController),
+                    _inputField(controller: namaController),
+
+                    const SizedBox(height: 10),
+
+                    /// NIK
+                    const Text("NIK"),
+                    const SizedBox(height: 10),
+                    _inputField(controller: nikController),
 
                     const SizedBox(height: 20),
                     const Divider(),
