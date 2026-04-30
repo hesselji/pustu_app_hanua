@@ -21,6 +21,21 @@ class _PatientRegisterScreenState
   /// 🔥 STATE
   DateTime? selectedDate;
   String selectedLayanan = "";
+  TimeOfDay? selectedTime;
+
+  /// Time Picker
+  Future<void> pilihJam() async {
+    TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+   );
+
+  if (picked != null) {
+    setState(() {
+      selectedTime = picked;
+      });
+    }
+  }
 
   /// 🔥 DATE PICKER
   Future<void> pilihTanggal() async {
@@ -89,6 +104,7 @@ class _PatientRegisterScreenState
       dataPasienController.clear();
       keluhanController.clear();
       selectedDate = null;
+      selectedTime = null;
       selectedLayanan = "";
     });
   }
@@ -232,12 +248,29 @@ class _PatientRegisterScreenState
                         height: 50,
                         color: Colors.grey[300],
                         alignment: Alignment.centerLeft,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
                           selectedDate == null
                               ? "Pilih tanggal"
                               : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    /// 🔥 JAM
+                    GestureDetector(
+                      onTap: pilihJam,
+                      child: Container(
+                        height: 50,
+                        color: Colors.grey[300],
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          selectedTime == null
+                              ? "Pilih jam"
+                              : "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}",
                         ),
                       ),
                     ),
