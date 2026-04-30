@@ -16,6 +16,8 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
   DateTime? selectedDate;
   Map<String, dynamic>? resultData;
 
+  bool isClicked = false; // 🔥 untuk warna tombol
+
   /// 🔥 DATE PICKER
   Future<void> pilihTanggal() async {
     DateTime? picked = await showDatePicker(
@@ -32,8 +34,20 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
     }
   }
 
-  /// 🔥 CEK DATA KE FIRESTORE
+  /// 🔥 FORMAT TANGGAL + JAM
+  String formatTanggal(DateTime date) {
+    return "${date.day}/${date.month}/${date.year} "
+           "${date.hour.toString().padLeft(2, '0')}:"
+           "${date.minute.toString().padLeft(2, '0')}";
+  }
+
+  /// 🔥 CEK DATA KE FIRESTORE (FIX FILTER)
   Future<void> cekData() async {
+
+    setState(() {
+      isClicked = true; // tombol jadi hijau
+    });
+
     if (nikController.text.isEmpty || selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -56,16 +70,34 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Data tidak ditemukan"),
-          ),
+          const SnackBar(content: Text("Data tidak ditemukan")),
         );
         return;
       }
 
-      /// Ambil data pertama
+      /// 🔥 FILTER TANGGAL (biar sesuai hari yang dipilih)
+      final filtered = snapshot.docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        DateTime tgl = (data['tanggal'] as Timestamp).toDate();
+
+        return tgl.year == selectedDate!.year &&
+               tgl.month == selectedDate!.month &&
+               tgl.day == selectedDate!.day;
+      }).toList();
+
+      if (filtered.isEmpty) {
+        setState(() {
+          resultData = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Data tidak sesuai tanggal")),
+        );
+        return;
+      }
+
       setState(() {
-        resultData = snapshot.docs.first.data() as Map<String, dynamic>;
+        resultData = filtered.first.data() as Map<String, dynamic>;
       });
 
     } catch (e) {
@@ -152,17 +184,23 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
 
                     const SizedBox(height: 20),
 
-                    /// 🔥 BUTTON KIRIM
+                    /// 🔥 BUTTON KIRIM (HIJAU SAAT DIKLIK)
                     GestureDetector(
                       onTap: cekData,
                       child: Container(
                         width: double.infinity,
-                        height: 40,
-                        color: Colors.grey[300],
+                        height: 45,
+                        decoration: BoxDecoration(
+                          color: isClicked ? Colors.green : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(5),
+                        ),
                         child: const Center(
                           child: Text(
                             "KIRIM",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -173,18 +211,26 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
                     /// 🔥 HASIL
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      color: Colors.grey[300],
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: resultData == null
                           ? const Center(child: Text("DETAIL BEROBAT"))
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Nama/NIK: ${resultData!['nik']}"),
+                                Text("Nama: ${resultData!['patient_name']}"),
+                                Text("NIK: ${resultData!['nik']}"),
+                                const SizedBox(height: 5),
                                 Text("Keluhan: ${resultData!['keluhan']}"),
                                 Text("Layanan: ${resultData!['layanan']}"),
                                 Text("Status: ${resultData!['status']}"),
-                                Text("Tanggal: ${resultData!['tanggal'].toDate()}")
+                                const SizedBox(height: 5),
+                                Text(
+                                  "Tanggal: ${formatTanggal((resultData!['tanggal'] as Timestamp).toDate())}",
+                                ),
                               ],
                             ),
                     ),

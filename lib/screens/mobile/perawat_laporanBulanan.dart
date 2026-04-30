@@ -26,6 +26,21 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     "Desember",
   ];
 
+  final Map<String, int> bulanMap = {
+    "Jan": 1,
+    "Feb": 2,
+    "Mar": 3,
+    "Apr": 4,
+    "May": 5,
+    "Jun": 6,
+    "Jul": 7,
+    "Aug": 8,
+    "Sep": 9,
+    "Oct": 10,
+    "Nov": 11,
+    "Dec": 12,
+  };
+
   String? selectedBulan;
   int? selectedTahun;
 
@@ -51,6 +66,9 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   };
 
   Map<String, int> penyakitMap = {};
+
+  /// 🔥 CACHE PASIEN
+  Map<String, Map<String, dynamic>> cachePasien = {};
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +153,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
             if (noData)
               Text(
-                "Tidak ada data pada Bulan $submittedBulan Tahun $submittedTahun",
+                "Tidak ada data pada $submittedBulan $submittedTahun",
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.red,
@@ -158,14 +176,12 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
                       "$totalKunjungan kunjungan",
                       bold: true,
                     ),
-                    const SizedBox(height: 5),
                     _rowBetween(
                       "Total Pasien",
                       "$totalPasien orang",
                       bold: true,
                     ),
                     const SizedBox(height: 10),
-
                     _barRow("Laki-laki", laki, totalPasien, Colors.blue),
                     _barRow("Perempuan", perempuan, totalPasien, Colors.pink),
                   ],
@@ -175,7 +191,6 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
               const SizedBox(height: 20),
 
               _sectionTitle("Rentang Umur"),
-
               ...umurMap.entries.map((e) {
                 return _simpleRow(
                   e.key,
@@ -187,12 +202,11 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
               const SizedBox(height: 20),
 
               _sectionTitle("Daftar Diagnosis"),
-
               ...penyakitMap.entries.map((e) {
                 return _simpleRow(
                   e.key,
                   "${e.value} diagnosis",
-                  const Color.fromARGB(255, 180, 180, 180),
+                  Colors.grey.shade200,
                 );
               }),
             ],
@@ -202,15 +216,22 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     );
   }
 
-  InputDecoration _inputStyle(String label) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: Colors.grey[100],
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-    );
+  DateTime? parseTanggal(String text) {
+    try {
+      List<String> parts = text.split(" ");
+      int day = int.parse(parts[0]);
+      int month = bulanMap[parts[1]] ?? 0;
+      int year = int.parse(parts[2]);
+
+      if (month == 0) return null;
+
+      return DateTime(year, month, day);
+    } catch (e) {
+      return null;
+    }
   }
 
+  /// 🔥 AMBIL DATA CEPAT
   Future<void> _submitLaporan() async {
     if (selectedBulan == null || selectedTahun == null) return;
 
@@ -233,60 +254,58 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     Set<String> pasienUnik = {};
     int bulanAngka = bulanList.indexOf(submittedBulan!) + 1;
 
-    final patients = await firestore.collection("patients").get();
+    /// 🔥 1x QUERY SAJA
+    final snapshot = await firestore.collectionGroup("medical_records").get();
 
-    for (var patient in patients.docs) {
-      final data = patient.data();
+    for (var doc in snapshot.docs) {
+      final m = doc.data();
 
-      String jk = data["jk"] ?? "";
-      String tgl = data["tgl"] ?? "";
+      if (m["tanggal"] == null) continue;
 
-      bool counted = false;
+      DateTime? dt = parseTanggal(m["tanggal"]);
+      if (dt == null) continue;
 
-      final medicals =
-          await firestore
-              .collection("patients")
-              .doc(patient.id)
-              .collection("medical_records")
-              .get();
+      if (dt.month == bulanAngka && dt.year == submittedTahun) {
+        totalKunjungan++;
 
-      for (var med in medicals.docs) {
-        final m = med.data();
+        String pasienId = doc.reference.parent.parent!.id;
+        pasienUnik.add(pasienId);
 
-        Timestamp? created = m["created_at"];
-        if (created == null) continue;
+        /// 🔥 CACHE PASIEN
+        if (!cachePasien.containsKey(pasienId)) {
+          final pDoc =
+              await firestore.collection("patients").doc(pasienId).get();
+          if (pDoc.exists) {
+            cachePasien[pasienId] = pDoc.data()!;
+          }
+        }
 
-        DateTime dt = created.toDate();
+        final p = cachePasien[pasienId];
+        if (p != null) {
+          String jk = p["jk"] ?? "";
+          String tgl = p["tgl"] ?? "";
 
-        if (dt.month == bulanAngka && dt.year == submittedTahun) {
-          totalKunjungan++;
-          pasienUnik.add(patient.id);
-
-          if (!counted) {
-            counted = true;
-
-            if (jk.toLowerCase().contains("laki")) {
-              laki++;
-            } else {
-              perempuan++;
-            }
-
-            int umur = hitungUmur(tgl);
-            kategoriUmur(umur);
+          if (jk.toLowerCase().contains("laki")) {
+            laki++;
+          } else {
+            perempuan++;
           }
 
-          String diagnosa = (m["diagnosa"] ?? "").toString().trim();
+          int umur = hitungUmur(tgl);
+          kategoriUmur(umur);
+        }
 
-          if (diagnosa.isNotEmpty) {
-            diagnosa = normalisasiDiagnosa(diagnosa);
-            penyakitMap[diagnosa] = (penyakitMap[diagnosa] ?? 0) + 1;
-          }
+        String diagnosa = (m["diagnosa"] ?? "").toString().trim();
+        if (diagnosa.isNotEmpty) {
+          diagnosa = normalisasiDiagnosa(diagnosa);
+          penyakitMap[diagnosa] = (penyakitMap[diagnosa] ?? 0) + 1;
         }
       }
     }
 
     totalPasien = pasienUnik.length;
 
+    /// 🔥 SORT TERBANYAK
     penyakitMap = Map.fromEntries(
       penyakitMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
     );
@@ -312,18 +331,19 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   }
 
   void kategoriUmur(int usia) {
-    if (usia < 1)
+    if (usia < 1) {
       umurMap["Bayi (0–11 bulan)"] = umurMap["Bayi (0–11 bulan)"]! + 1;
-    else if (usia <= 9)
+    } else if (usia <= 9) {
       umurMap["Anak-anak (1–9 tahun)"] = umurMap["Anak-anak (1–9 tahun)"]! + 1;
-    else if (usia <= 18)
+    } else if (usia <= 18) {
       umurMap["Remaja (10–18 tahun)"] = umurMap["Remaja (10–18 tahun)"]! + 1;
-    else if (usia <= 29)
+    } else if (usia <= 29) {
       umurMap["Pemuda (19–29 tahun)"] = umurMap["Pemuda (19–29 tahun)"]! + 1;
-    else if (usia <= 59)
+    } else if (usia <= 59) {
       umurMap["Dewasa (30–59 tahun)"] = umurMap["Dewasa (30–59 tahun)"]! + 1;
-    else
+    } else {
       umurMap["Lansia (≥60)"] = umurMap["Lansia (≥60)"]! + 1;
+    }
   }
 
   String normalisasiDiagnosa(String text) {
@@ -331,18 +351,21 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
-  /// 🔥 UPDATE DI SINI
+  InputDecoration _inputStyle(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.grey[100],
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    );
+  }
+
   Widget _rowBetween(String l, String r, {bool bold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(l, style: TextStyle(fontWeight: bold ? FontWeight.bold : null)),
-        Text(
-          r,
-          style: TextStyle(
-            fontWeight: bold ? FontWeight.bold : FontWeight.bold,
-          ),
-        ),
+        Text(r, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
