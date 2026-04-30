@@ -638,36 +638,37 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
             const Icon(Icons.medical_services, color: Colors.white),
             const SizedBox(height: 10),
 
-         FutureBuilder<QuerySnapshot>(
-  future: FirebaseFirestore.instance
-      .collectionGroup("medical_records")
-      .get(), // 🔥 ambil semua dulu
-  builder: (context, snapshot) {
-    if (!snapshot.hasData) {
-      return const Text("0",
-          style: TextStyle(color: Colors.white));
-    }
+            FutureBuilder<QuerySnapshot>(
+              future:
+                  FirebaseFirestore.instance
+                      .collectionGroup("medical_records")
+                      .get(), // 🔥 ambil semua dulu
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Text("0", style: TextStyle(color: Colors.white));
+                }
 
-    final docs = snapshot.data!.docs;
+                final docs = snapshot.data!.docs;
 
-    /// 🔥 FILTER DI SINI (INI YANG BARU)
-    final filtered = docs.where((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      return data['is_deleted'] != true;
-    }).toList();
+                /// 🔥 FILTER DI SINI (INI YANG BARU)
+                final filtered =
+                    docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      return data['is_deleted'] != true;
+                    }).toList();
 
-    final total = filtered.length;
+                final total = filtered.length;
 
-    return Text(
-      "$total",
-      style: const TextStyle(
-        fontSize: 26,
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  },
-),
+                return Text(
+                  "$total",
+                  style: const TextStyle(
+                    fontSize: 26,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
+            ),
 
             const SizedBox(height: 5),
             const Text("Rekam Medis", style: TextStyle(color: Colors.white70)),
