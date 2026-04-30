@@ -9,15 +9,13 @@ class WebPerawatDashboard extends StatefulWidget {
   const WebPerawatDashboard({super.key});
 
   @override
-  State<WebPerawatDashboard> createState() =>
-      _WebPerawatDashboardState();
+  State<WebPerawatDashboard> createState() => _WebPerawatDashboardState();
 }
 
-class _WebPerawatDashboardState
-    extends State<WebPerawatDashboard> {
+class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
   int selectedMenu = 0;
 
-  DateTime? selectedDate;
+  DateTime? selectedDate = DateTime.now();
 
   final menus = [
     {"icon": Icons.dashboard, "title": "Dashboard"},
@@ -27,6 +25,10 @@ class _WebPerawatDashboardState
 
   String formatDate(DateTime date) {
     return "${date.day} - ${date.month} - ${date.year}";
+  }
+
+  String formatTanggalIndo(DateTime dt) {
+    return "${dt.day}/${dt.month}/${dt.year}";
   }
 
   Future<void> pickDate() async {
@@ -46,16 +48,45 @@ class _WebPerawatDashboardState
     }
   }
 
-    Future<void> logout() async {
+  Future<void> confirmUpdate({
+    required String docId,
+    required String statusBaru,
+  }) async {
+    bool? result = await showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Konfirmasi"),
+            content: Text("Yakin ingin mengubah status menjadi $statusBaru?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Batal"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Ya"),
+              ),
+            ],
+          ),
+    );
+
+    if (result == true) {
+      await FirebaseFirestore.instance
+          .collection("registrations")
+          .doc(docId)
+          .update({"status": statusBaru});
+    }
+  }
+
+  Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
 
     if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const WebHomeScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const WebHomeScreen()),
       (route) => false,
     );
   }
@@ -66,15 +97,12 @@ class _WebPerawatDashboardState
       backgroundColor: const Color(0xFFF4F6F9),
       body: Row(
         children: [
-
           /// SIDEBAR
           Container(
             width: 230,
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(color: Colors.black12, blurRadius: 10)
-              ],
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
             ),
             child: Column(
               children: [
@@ -83,14 +111,14 @@ class _WebPerawatDashboardState
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset("assets/logo_pustu.png",
-                        height: 35),
+                    Image.asset("assets/logo_pustu.png", height: 35),
                     const SizedBox(width: 10),
                     const Text(
                       "Pustu Hanua",
                       style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -102,41 +130,36 @@ class _WebPerawatDashboardState
                   final active = selectedMenu == index;
 
                   return InkWell(
-                    onTap: () =>
-                        setState(() => selectedMenu = index),
+                    onTap: () => setState(() => selectedMenu = index),
                     child: AnimatedContainer(
-                      duration:
-                          const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 200),
                       margin: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: active
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.transparent,
-                        borderRadius:
-                            BorderRadius.circular(12),
+                        color:
+                            active
+                                ? Colors.green.withOpacity(0.1)
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             m["icon"] as IconData,
-                            color: active
-                                ? Colors.green
-                                : Colors.grey,
+                            color: active ? Colors.green : Colors.grey,
                           ),
                           const SizedBox(width: 10),
                           Text(
                             m["title"] as String,
                             style: TextStyle(
-                              color: active
-                                  ? Colors.green
-                                  : Colors.black,
-                              fontWeight: active
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
+                              color: active ? Colors.green : Colors.black,
+                              fontWeight:
+                                  active ? FontWeight.bold : FontWeight.normal,
                             ),
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -146,8 +169,7 @@ class _WebPerawatDashboardState
                 const Spacer(),
 
                 ListTile(
-                  leading:
-                      const Icon(Icons.logout, color: Colors.red),
+                  leading: const Icon(Icons.logout, color: Colors.red),
                   title: const Text("Logout"),
                   onTap: logout,
                 ),
@@ -161,25 +183,23 @@ class _WebPerawatDashboardState
               children: [
                 Container(
                   height: 70,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
                   color: Colors.white,
                   child: Row(
                     children: [
                       Text(
-                        menus[selectedMenu]["title"]
-                            as String,
+                        menus[selectedMenu]["title"] as String,
                         style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const Spacer(),
                       const Icon(Icons.notifications_none),
                       const SizedBox(width: 20),
                       const CircleAvatar(
                         backgroundColor: Colors.green,
-                        child: Icon(Icons.person,
-                            color: Colors.white),
+                        child: Icon(Icons.person, color: Colors.white),
                       ),
                     ],
                   ),
@@ -230,11 +250,9 @@ class _WebPerawatDashboardState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         Text(
           greeting,
-          style: const TextStyle(
-              fontSize: 22, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 5),
@@ -250,8 +268,7 @@ class _WebPerawatDashboardState
         Row(
           children: [
             _statCard("Total Pasien", Icons.people, "patients"),
-            _statCard("Rekam Medis",
-                Icons.medical_services, "medical_records"),
+            _statCard("Rekam Medis", Icons.medical_services, "medical_records"),
             _todayPatientCard(),
           ],
         ),
@@ -271,21 +288,20 @@ class _WebPerawatDashboardState
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
-                BoxShadow(
-                    color: Colors.black12, blurRadius: 10)
+                BoxShadow(color: Colors.black12, blurRadius: 10),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Row(
                   children: [
                     const Text(
                       "Pendaftaran Pasien",
                       style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const Spacer(),
 
@@ -299,10 +315,9 @@ class _WebPerawatDashboardState
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () {
-                          setState(
-                              () => selectedDate = null);
+                          setState(() => selectedDate = null);
                         },
-                      )
+                      ),
                   ],
                 ),
 
@@ -310,134 +325,177 @@ class _WebPerawatDashboardState
 
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection("registrations")
-                        .snapshots(),
+                    stream:
+                        FirebaseFirestore.instance
+                            .collection("registrations")
+                            .orderBy("created_at", descending: true)
+                            .snapshots(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
-                        return const Center(
-                            child:
-                                CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       final docs = snapshot.data!.docs;
 
-                      final filtered = docs.where((doc) {
-                        return doc['tanggal'] ==
-                            selectedString;
-                      }).toList();
+                      final filtered =
+                          docs.where((doc) {
+                            if (selectedDate == null) return true;
+
+                            final data = doc.data() as Map<String, dynamic>;
+                            if (data['tanggal'] == null) return false;
+
+                            DateTime tgl =
+                                (data['tanggal'] as Timestamp).toDate();
+
+                            return tgl.day == selectedDate!.day &&
+                                tgl.month == selectedDate!.month &&
+                                tgl.year == selectedDate!.year;
+                          }).toList();
 
                       if (filtered.isEmpty) {
                         return const Center(
-                            child: Text(
-                                "Tidak ada pendaftaran"));
+                          child: Text("Tidak ada pendaftaran"),
+                        );
                       }
 
                       return ListView.builder(
                         itemCount: filtered.length,
                         itemBuilder: (context, i) {
                           final doc = filtered[i];
-                          final d = doc.data()
-                              as Map<String, dynamic>;
+                          final d = doc.data() as Map<String, dynamic>;
 
-                          final status =
-                              d['status'] ?? "pending";
+                          final status = (d['status'] ?? "Pending").toString();
+
+                          Color statusColor;
+                          switch (status.toLowerCase()) {
+                            case "diterima":
+                              statusColor = Colors.green;
+                              break;
+                            case "ditolak":
+                              statusColor = Colors.red;
+                              break;
+                            default:
+                              statusColor = Colors.orange;
+                          }
+
+                          DateTime jam =
+                              (d['created_at'] as Timestamp).toDate();
 
                           return Container(
-                            margin: const EdgeInsets.only(
-                                bottom: 12),
-                            padding:
-                                const EdgeInsets.all(14),
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.circular(12),
-                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(16),
+                              color: Colors.white,
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black12, blurRadius: 6),
+                              ],
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const CircleAvatar(
-                                  backgroundColor:
-                                      Colors.green,
-                                  child: Icon(Icons.person,
-                                      color: Colors.white),
+                                /// HEADER
+                                Row(
+                                  children: [
+                                    const CircleAvatar(
+                                      backgroundColor: Colors.green,
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            d['patient_name'] ?? "-",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text("NIK: ${d['nik']}"),
+                                        ],
+                                      ),
+                                    ),
+
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        status,
+                                        style: TextStyle(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
 
-                                const SizedBox(width: 12),
+                                const SizedBox(height: 10),
 
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment
-                                            .start,
-                                    children: [
-                                      Text(
-                                        d['patient_name'] ??
-                                            "-",
-                                        style: const TextStyle(
-                                            fontWeight:
-                                                FontWeight
-                                                    .bold),
-                                      ),
-                                      Text(
-                                          "NIK ${d['nik'] ?? '-'}"),
-                                    ],
-                                  ),
+                                Text("Keluhan: ${d['keluhan']}"),
+                                Text("Layanan: ${d['layanan']}"),
+
+                                const SizedBox(height: 6),
+
+                                Text(
+                                  "Tanggal: ${formatTanggalIndo((d['tanggal'] as Timestamp).toDate())}",
+                                  style: const TextStyle(color: Colors.grey),
                                 ),
 
                                 Text(
-                                  status.toUpperCase(),
-                                  style: TextStyle(
-                                    color: status ==
-                                            "accepted"
-                                        ? Colors.green
-                                        : status ==
-                                                "rejected"
-                                            ? Colors.red
-                                            : Colors.orange,
-                                  ),
+                                  "Jam: ${jam.hour}:${jam.minute.toString().padLeft(2, '0')}",
+                                  style: const TextStyle(color: Colors.grey),
                                 ),
 
-                                const SizedBox(width: 10),
+                                const SizedBox(height: 12),
 
-                                if (status == "pending") ...[
-                                  ElevatedButton(
-                                    style: ElevatedButton
-                                        .styleFrom(
-                                            backgroundColor:
-                                                Colors.green),
-                                    onPressed: () async {
-                                      await FirebaseFirestore
-                                          .instance
-                                          .collection(
-                                              "registrations")
-                                          .doc(doc.id)
-                                          .update({
-                                        "status": "accepted"
-                                      });
-                                    },
-                                    child:
-                                        const Text("Terima"),
+                                if (status.toLowerCase() == "pending") ...[
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                          ),
+                                          onPressed: () {
+                                            confirmUpdate(
+                                              docId: doc.id,
+                                              statusBaru: "Diterima",
+                                            );
+                                          },
+                                          child: const Text("Terima"),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          onPressed: () {
+                                            confirmUpdate(
+                                              docId: doc.id,
+                                              statusBaru: "Ditolak",
+                                            );
+                                          },
+                                          child: const Text("Tolak"),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    style: ElevatedButton
-                                        .styleFrom(
-                                            backgroundColor:
-                                                Colors.red),
-                                    onPressed: () async {
-                                      await FirebaseFirestore
-                                          .instance
-                                          .collection(
-                                              "registrations")
-                                          .doc(doc.id)
-                                          .update({
-                                        "status": "rejected"
-                                      });
-                                    },
-                                    child:
-                                        const Text("Tolak"),
-                                  ),
-                                ]
+                                ],
                               ],
                             ),
                           );
@@ -457,51 +515,46 @@ class _WebPerawatDashboardState
   /// 🔥 SERVICE STATUS
   Widget _serviceStatusCard() {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('service_status')
-          .doc('status')
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collection('service_status')
+              .doc('status')
+              .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const CircularProgressIndicator();
         }
 
-        final data =
-            snapshot.data!.data() as Map<String, dynamic>?;
+        final data = snapshot.data!.data() as Map<String, dynamic>?;
 
-        bool isAvailable =
-            data?['isAvailable'] ?? true;
+        bool isAvailable = data?['isAvailable'] ?? true;
 
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             gradient: LinearGradient(
-              colors: isAvailable
-                  ? [Colors.green.shade50, Colors.white]
-                  : [Colors.red.shade50, Colors.white],
+              colors:
+                  isAvailable
+                      ? [Colors.green.shade50, Colors.white]
+                      : [Colors.red.shade50, Colors.white],
             ),
           ),
           child: Row(
             children: [
-
-              Icon(Icons.medical_services,
-                  color: isAvailable
-                      ? Colors.green
-                      : Colors.red),
+              Icon(
+                Icons.medical_services,
+                color: isAvailable ? Colors.green : Colors.red,
+              ),
 
               const SizedBox(width: 12),
 
               Expanded(
                 child: Text(
-                  isAvailable
-                      ? "Perawat Tersedia"
-                      : "Perawat Tidak Tersedia",
+                  isAvailable ? "Perawat Tersedia" : "Perawat Tidak Tersedia",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isAvailable
-                        ? Colors.green
-                        : Colors.red,
+                    color: isAvailable ? Colors.green : Colors.red,
                   ),
                 ),
               ),
@@ -512,9 +565,7 @@ class _WebPerawatDashboardState
                   await FirebaseFirestore.instance
                       .collection('service_status')
                       .doc('status')
-                      .set({
-                    'isAvailable': value,
-                  });
+                      .set({'isAvailable': value});
                 },
               ),
             ],
@@ -524,8 +575,7 @@ class _WebPerawatDashboardState
     );
   }
 
-  Widget _statCard(
-      String title, IconData icon, String collection) {
+  Widget _statCard(String title, IconData icon, String collection) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.only(right: 15),
@@ -533,26 +583,20 @@ class _WebPerawatDashboardState
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           gradient: LinearGradient(
-            colors: [
-              Colors.green.shade400,
-              Colors.green.shade600
-            ],
+            colors: [Colors.green.shade400, Colors.green.shade600],
           ),
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: Colors.white),
             const SizedBox(height: 10),
 
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection(collection)
-                  .snapshots(),
+              stream:
+                  FirebaseFirestore.instance.collection(collection).snapshots(),
               builder: (context, snapshot) {
-                int total =
-                    snapshot.data?.docs.length ?? 0;
+                int total = snapshot.data?.docs.length ?? 0;
 
                 return Text(
                   "$total",
@@ -566,9 +610,7 @@ class _WebPerawatDashboardState
             ),
 
             const SizedBox(height: 5),
-            Text(title,
-                style:
-                    const TextStyle(color: Colors.white70)),
+            Text(title, style: const TextStyle(color: Colors.white70)),
           ],
         ),
       ),
@@ -577,8 +619,7 @@ class _WebPerawatDashboardState
 
   Widget _todayPatientCard() {
     final today = DateTime.now();
-    final todayString =
-        "${today.day} - ${today.month} - ${today.year}";
+    final todayString = "${today.day} - ${today.month} - ${today.year}";
 
     return Expanded(
       child: Container(
@@ -588,26 +629,23 @@ class _WebPerawatDashboardState
           color: Colors.white,
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.today,
-                color: Colors.green),
+            const Icon(Icons.today, color: Colors.green),
             const SizedBox(height: 10),
 
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection("patients")
-                  .snapshots(),
+              stream:
+                  FirebaseFirestore.instance.collection("patients").snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData)
-                  return const Text("-");
+                if (!snapshot.hasData) return const Text("-");
 
                 final docs = snapshot.data!.docs;
 
-                final count = docs.where((doc) {
-                  return doc['tgl'] == todayString;
-                }).length;
+                final count =
+                    docs.where((doc) {
+                      return doc['tgl'] == todayString;
+                    }).length;
 
                 return Text(
                   "$count",
@@ -620,10 +658,7 @@ class _WebPerawatDashboardState
             ),
 
             const SizedBox(height: 5),
-            const Text(
-              "Pasien Hari Ini",
-              style: TextStyle(color: Colors.grey),
-            ),
+            const Text("Pasien Hari Ini", style: TextStyle(color: Colors.grey)),
           ],
         ),
       ),
