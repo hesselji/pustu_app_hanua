@@ -124,9 +124,9 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
-                  _logo("Kemenkes"),
+                  _logo("assets/logo_kemenkes.png"),
                   const SizedBox(width: 10),
-                  _logo("Pustu"),
+                  _logo("assets/logo_pustu.png"),
                   const Spacer(),
                   const Text("Pustu Hanua",
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -269,21 +269,27 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
   }
 
   /// LOGO
-  Widget _logo(String text) {
-    return Column(
-      children: [
-        Container(
-          width: 35,
-          height: 35,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(8),
+      /// 🔸 LOGO IMAGE
+  Widget _logo(String imagePath) {
+    return Container(
+      width: 45,
+      height: 45,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
-          child: const Icon(Icons.image, size: 18, color: Colors.grey),
-        ),
-        const SizedBox(height: 2),
-        Text(text, style: const TextStyle(fontSize: 8)),
-      ],
+        ],
+      ),
+      padding: const EdgeInsets.all(5),
+      child: Image.asset(
+        imagePath,
+        fit: BoxFit.contain,
+      ),
     );
   }
 }
