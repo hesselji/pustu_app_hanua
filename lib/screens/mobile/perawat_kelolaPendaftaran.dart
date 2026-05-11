@@ -22,6 +22,9 @@ class _PerawatKelolaPendaftaranScreenState
 
   List<QueryDocumentSnapshot> daftarPasien = [];
 
+  /// CACHE STATUS PASIEN
+  Map<String, bool> cachePasienTerdaftar = {};
+
   @override
   void dispose() {
     tanggalController.dispose();
@@ -31,6 +34,26 @@ class _PerawatKelolaPendaftaranScreenState
   String capitalize(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1);
+  }
+
+  /// CEK PASIEN TERDAFTAR ATAU BARU
+  Future<bool> cekPasienTerdaftar(String nik) async {
+    if (cachePasienTerdaftar.containsKey(nik)) {
+      return cachePasienTerdaftar[nik]!;
+    }
+
+    final snapshot =
+        await firestore
+            .collection("patients")
+            .where("nik", isEqualTo: nik)
+            .limit(1)
+            .get();
+
+    bool terdaftar = snapshot.docs.isNotEmpty;
+
+    cachePasienTerdaftar[nik] = terdaftar;
+
+    return terdaftar;
   }
 
   Future<void> pilihTanggal() async {
@@ -275,162 +298,169 @@ class _PerawatKelolaPendaftaranScreenState
 
                         tanggal = formatTanggal(dt);
 
-                        /// JAM BEROBAT
                         jamBerobat = formatJam(dt);
                       }
 
-                      return Card(
-                        elevation: 3,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ExpansionTile(
-                          collapsedBackgroundColor: Colors.green.shade100,
-                          backgroundColor: Colors.green.shade50,
+                      return FutureBuilder<bool>(
+                        future: cekPasienTerdaftar(nik),
+                        builder: (context, snapshot) {
+                          bool pasienTerdaftar = snapshot.data ?? false;
 
-                          /// HEADER CARD
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                nama,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
+                          String statusPasien =
+                              pasienTerdaftar
+                                  ? "Pasien Terdaftar"
+                                  : "Pasien Baru";
 
-                              const SizedBox(height: 4),
+                          return Card(
+                            elevation: 3,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ExpansionTile(
+                              collapsedBackgroundColor: Colors.green.shade100,
+                              backgroundColor: Colors.green.shade50,
 
-                              Text(
-                                nik,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              Text(
-                                "Jam Daftar : $jamDaftar",
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ],
-                          ),
-
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
+                              /// HEADER CARD
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  itemDetail("Nama", nama),
-
-                                  itemDetail("NIK", nik),
-
-                                  itemDetail("Keluhan", keluhan),
-
-                                  itemDetail("Layanan", layanan),
-
-                                  Row(
-                                    children: [
-                                      const SizedBox(
-                                        width: 100,
-                                        child: Text(
-                                          "Status",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-
-                                      const Text(": "),
-
-                                      Text(
-                                        status,
-                                        style: TextStyle(
-                                          color: warnaStatus(status),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    nama,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
 
-                                  itemDetail("Tanggal", tanggal),
+                                  const SizedBox(height: 4),
 
-                                  itemDetail("Jam Berobat", jamBerobat),
-
-                                  const SizedBox(height: 15),
-
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          onPressed:
-                                              () => konfirmasiStatus(
-                                                id,
-                                                "Pending",
-                                              ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.orange,
-                                          ),
-                                          child: const Text(
-                                            "PENDING",
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(width: 5),
-
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          onPressed:
-                                              () => konfirmasiStatus(
-                                                id,
-                                                "Ditolak",
-                                              ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                          ),
-                                          child: const Text(
-                                            "TOLAK",
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(width: 5),
-
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          onPressed:
-                                              () =>
-                                                  updateStatus(id, "Diterima"),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.green,
-                                          ),
-                                          child: const Text(
-                                            "TERIMA",
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    "Jam Daftar : $jamDaftar",
+                                    style: const TextStyle(fontSize: 13),
                                   ),
                                 ],
                               ),
+
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    children: [
+                                      itemDetail("Nama", nama),
+
+                                      itemDetail("NIK", nik),
+
+                                      itemDetail("Pasien", statusPasien),
+
+                                      itemDetail("Keluhan", keluhan),
+
+                                      itemDetail("Layanan", layanan),
+
+                                      Row(
+                                        children: [
+                                          const SizedBox(
+                                            width: 100,
+                                            child: Text(
+                                              "Status",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+
+                                          const Text(": "),
+
+                                          Text(
+                                            status,
+                                            style: TextStyle(
+                                              color: warnaStatus(status),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      itemDetail("Tanggal", tanggal),
+
+                                      itemDetail("Jam Berobat", jamBerobat),
+
+                                      const SizedBox(height: 15),
+
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed:
+                                                  () => konfirmasiStatus(
+                                                    id,
+                                                    "Pending",
+                                                  ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.orange,
+                                              ),
+                                              child: const Text(
+                                                "PENDING",
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                          const SizedBox(width: 5),
+
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed:
+                                                  () => konfirmasiStatus(
+                                                    id,
+                                                    "Ditolak",
+                                                  ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                              ),
+                                              child: const Text(
+                                                "TOLAK",
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                          const SizedBox(width: 5),
+
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed:
+                                                  () => updateStatus(
+                                                    id,
+                                                    "Diterima",
+                                                  ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.green,
+                                              ),
+                                              child: const Text(
+                                                "TERIMA",
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
                   ),
