@@ -15,15 +15,12 @@ class _PerawatKelolaPendaftaranScreenState
 
   DateTime? selectedDate;
 
-  /// 🔥 CONTROLLER BARU
   final TextEditingController tanggalController = TextEditingController();
 
   bool loading = false;
   bool sudahCari = false;
 
   List<QueryDocumentSnapshot> daftarPasien = [];
-
-  Map<String, String> cacheNama = {};
 
   @override
   void dispose() {
@@ -34,30 +31,6 @@ class _PerawatKelolaPendaftaranScreenState
   String capitalize(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1);
-  }
-
-  Future<String> getNamaDariNIK(String nik) async {
-    if (cacheNama.containsKey(nik)) return cacheNama[nik]!;
-
-    final snapshot =
-        await firestore
-            .collection("patients")
-            .where("nik", isEqualTo: nik)
-            .limit(1)
-            .get();
-
-    if (snapshot.docs.isNotEmpty) {
-      String nama =
-          (snapshot.docs.first.data()["nama"] ?? "").toString().trim();
-
-      nama = capitalize(nama);
-
-      cacheNama[nik] = nama;
-      return nama;
-    } else {
-      cacheNama[nik] = "(-) Pasien Baru";
-      return "(-) Pasien Baru";
-    }
   }
 
   Future<void> pilihTanggal() async {
@@ -71,8 +44,6 @@ class _PerawatKelolaPendaftaranScreenState
     if (picked != null) {
       setState(() {
         selectedDate = picked;
-
-        /// 🔥 SET KE TEXTFIELD
         tanggalController.text = formatTanggal(picked);
       });
     }
@@ -80,6 +51,10 @@ class _PerawatKelolaPendaftaranScreenState
 
   String formatTanggal(DateTime date) {
     return "${date.day}-${date.month}-${date.year}";
+  }
+
+  String formatJam(DateTime date) {
+    return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
   }
 
   Future<void> ambilData() async {
@@ -105,7 +80,7 @@ class _PerawatKelolaPendaftaranScreenState
       List<QueryDocumentSnapshot> hasil = [];
 
       for (var doc in snapshot.docs) {
-        final data = doc.data();
+        final data = doc.data() as Map<String, dynamic>;
 
         if (data["tanggal"] == null) continue;
 
@@ -135,6 +110,35 @@ class _PerawatKelolaPendaftaranScreenState
     await ambilData();
   }
 
+  Future<void> konfirmasiStatus(String docId, String statusBaru) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Konfirmasi"),
+          content: Text(
+            'Apakah anda yakin ingin mengubah status menjadi "$statusBaru"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Ya", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      await updateStatus(docId, statusBaru);
+    }
+  }
+
   Color warnaStatus(String status) {
     switch (status.toLowerCase()) {
       case "diterima":
@@ -152,7 +156,13 @@ class _PerawatKelolaPendaftaranScreenState
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 90, child: Text(label)),
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
           const Text(": "),
           Expanded(child: Text(value)),
         ],
@@ -179,12 +189,11 @@ class _PerawatKelolaPendaftaranScreenState
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            /// 🔥 FIXED TEXTFIELD
             GestureDetector(
               onTap: pilihTanggal,
               child: AbsorbPointer(
                 child: TextField(
-                  controller: tanggalController, // 🔥 INI KUNCINYA
+                  controller: tanggalController,
                   decoration: InputDecoration(
                     labelText: "Tanggal",
                     hintText: "Pilih tanggal",
@@ -235,151 +244,193 @@ class _PerawatKelolaPendaftaranScreenState
                     itemCount: daftarPasien.length,
                     itemBuilder: (context, index) {
                       final doc = daftarPasien[index];
+
                       final data = doc.data() as Map<String, dynamic>;
 
                       String id = doc.id;
+
                       String nik = data["nik"] ?? "-";
+
+                      String nama = capitalize(data["patient_name"] ?? "-");
+
                       String keluhan = capitalize(data["keluhan"] ?? "-");
+
                       String layanan = capitalize(data["layanan"] ?? "-");
+
                       String status = capitalize(data["status"] ?? "Pending");
 
-                      String jam = "-";
+                      String jamDaftar = "-";
                       String tanggal = "-";
+                      String jamBerobat = "-";
 
                       if (data["created_at"] != null) {
                         DateTime dt =
                             (data["created_at"] as Timestamp).toDate();
-                        jam =
-                            "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+
+                        jamDaftar = formatJam(dt);
                       }
 
                       if (data["tanggal"] != null) {
                         DateTime dt = (data["tanggal"] as Timestamp).toDate();
-                        tanggal = "${dt.day}-${dt.month}-${dt.year}";
+
+                        tanggal = formatTanggal(dt);
+
+                        /// JAM BEROBAT
+                        jamBerobat = formatJam(dt);
                       }
 
-                      return FutureBuilder<String>(
-                        future: getNamaDariNIK(nik),
-                        builder: (context, snapshot) {
-                          String nama = snapshot.data ?? "...";
+                      return Card(
+                        elevation: 3,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ExpansionTile(
+                          collapsedBackgroundColor: Colors.green.shade100,
+                          backgroundColor: Colors.green.shade50,
 
-                          return Card(
-                            elevation: 3,
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ExpansionTile(
-                              collapsedBackgroundColor: Colors.green.shade100,
-                              backgroundColor: Colors.green.shade50,
-                              title: Text(
+                          /// HEADER CARD
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nama,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+
+                              const SizedBox(height: 4),
+
+                              Text(
                                 nik,
                                 style: const TextStyle(
+                                  fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              subtitle: Text("Jam daftar : $jam"),
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    children: [
-                                      itemDetail("Nama", nama),
-                                      itemDetail("NIK", nik),
-                                      itemDetail("Keluhan", keluhan),
-                                      itemDetail("Layanan", layanan),
 
-                                      Row(
-                                        children: [
-                                          const SizedBox(
-                                            width: 90,
-                                            child: Text("Status"),
+                              Text(
+                                "Jam Daftar : $jamDaftar",
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ],
+                          ),
+
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                children: [
+                                  itemDetail("Nama", nama),
+
+                                  itemDetail("NIK", nik),
+
+                                  itemDetail("Keluhan", keluhan),
+
+                                  itemDetail("Layanan", layanan),
+
+                                  Row(
+                                    children: [
+                                      const SizedBox(
+                                        width: 100,
+                                        child: Text(
+                                          "Status",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
                                           ),
-                                          const Text(": "),
-                                          Text(
-                                            status,
-                                            style: TextStyle(
-                                              color: warnaStatus(status),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
 
-                                      itemDetail("Tanggal", tanggal),
+                                      const Text(": "),
 
-                                      const SizedBox(height: 15),
-
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed:
-                                                  () => updateStatus(
-                                                    id,
-                                                    "Pending",
-                                                  ),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.orange,
-                                              ),
-                                              child: const Text(
-                                                "PENDING",
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed:
-                                                  () => updateStatus(
-                                                    id,
-                                                    "Ditolak",
-                                                  ),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red,
-                                              ),
-                                              child: const Text(
-                                                "TOLAK",
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed:
-                                                  () => updateStatus(
-                                                    id,
-                                                    "Diterima",
-                                                  ),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.green,
-                                              ),
-                                              child: const Text(
-                                                "TERIMA",
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      Text(
+                                        status,
+                                        style: TextStyle(
+                                          color: warnaStatus(status),
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
+
+                                  itemDetail("Tanggal", tanggal),
+
+                                  itemDetail("Jam Berobat", jamBerobat),
+
+                                  const SizedBox(height: 15),
+
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed:
+                                              () => konfirmasiStatus(
+                                                id,
+                                                "Pending",
+                                              ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                          child: const Text(
+                                            "PENDING",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 5),
+
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed:
+                                              () => konfirmasiStatus(
+                                                id,
+                                                "Ditolak",
+                                              ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          child: const Text(
+                                            "TOLAK",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 5),
+
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed:
+                                              () =>
+                                                  updateStatus(id, "Diterima"),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                          ),
+                                          child: const Text(
+                                            "TERIMA",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       );
                     },
                   ),
