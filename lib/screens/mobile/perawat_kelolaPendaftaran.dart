@@ -80,7 +80,7 @@ class _PerawatKelolaPendaftaranScreenState
       List<QueryDocumentSnapshot> hasil = [];
 
       for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
 
         if (data["tanggal"] == null) continue;
 
