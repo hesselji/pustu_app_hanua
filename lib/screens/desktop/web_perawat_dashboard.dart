@@ -14,8 +14,34 @@ class WebPerawatDashboard extends StatefulWidget {
 
 class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
   int selectedMenu = 0;
+  bool hasUnreadNotification = true;
+  List<String> clearedNotifications = [];
+  bool firstLoadNotification = true;
 
   DateTime? selectedDate = DateTime.now();
+  @override
+  void initState() {
+    super.initState();
+
+    FirebaseFirestore.instance.collection("registrations").snapshots().listen((
+      event,
+    ) {
+      /// 🔥 skip realtime pertama
+      if (firstLoadNotification) {
+        firstLoadNotification = false;
+        return;
+      }
+
+      /// 🔥 hanya kalau ada document baru
+      if (event.docChanges.any((e) => e.type == DocumentChangeType.added)) {
+        if (mounted) {
+          setState(() {
+            hasUnreadNotification = true;
+          });
+        }
+      }
+    });
+  }
 
   final menus = [
     {"icon": Icons.dashboard, "title": "Dashboard"},
@@ -77,6 +103,249 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
           .doc(docId)
           .update({"status": statusBaru});
     }
+  }
+
+  void showNotifications() {
+    setState(() {
+      hasUnreadNotification = false;
+    });
+    showDialog(
+      context: context,
+      builder:
+          (_) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                width: 380,
+                margin: const EdgeInsets.only(top: 70, right: 20),
+                padding: const EdgeInsets.all(20),
+
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black12, blurRadius: 20),
+                  ],
+                ),
+
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    /// HEADER
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.notifications_active,
+                          color: Colors.green,
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        const Text(
+                          "Recent Activity",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () async {
+                          final snapshot =
+                              await FirebaseFirestore.instance
+                                  .collection("registrations")
+                                  .get();
+
+                          for (var doc in snapshot.docs) {
+                            await doc.reference.update({"is_cleared": true});
+                          }
+
+                          setState(() {
+                            hasUnreadNotification = false;
+                          });
+
+                          if (mounted) Navigator.pop(context);
+                        },
+
+                        icon: const Icon(
+                          Icons.delete_sweep,
+                          color: Colors.red,
+                          size: 18,
+                        ),
+
+                        label: const Text(
+                          "Bersihkan Notifikasi",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ),
+
+                    /// REALTIME DATA
+                    StreamBuilder<QuerySnapshot>(
+                      stream:
+                          FirebaseFirestore.instance
+                              .collection("registrations")
+                              .orderBy("created_at", descending: true)
+                              .limit(10)
+                              .snapshots(),
+
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        final docs =
+                            snapshot.data!.docs.where((doc) {
+                              final data = doc.data() as Map<String, dynamic>;
+
+                              return data['is_cleared'] != true;
+                            }).toList();
+
+                        if (docs.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Text("Belum ada aktivitas"),
+                          );
+                        }
+
+                        return SizedBox(
+                          height: 450,
+
+                          child: ListView.builder(
+                            itemCount: docs.length,
+
+                            itemBuilder: (context, i) {
+                              final d = docs[i].data() as Map<String, dynamic>;
+
+                              final status =
+                                  (d['status'] ?? "Pending").toString();
+
+                              IconData icon;
+                              Color color;
+                              String title;
+
+                              switch (status.toLowerCase()) {
+                                case "diterima":
+                                  icon = Icons.check_circle;
+                                  color = Colors.green;
+                                  title = "Pasien diterima";
+                                  break;
+
+                                case "ditolak":
+                                  icon = Icons.cancel;
+                                  color = Colors.red;
+                                  title = "Pasien ditolak";
+                                  break;
+
+                                default:
+                                  icon = Icons.access_time;
+                                  color = Colors.orange;
+                                  title = "Pendaftaran baru";
+                              }
+
+                              DateTime jam =
+                                  (d['created_at'] as Timestamp).toDate();
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(14),
+
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+
+                                      child: Icon(icon, color: color),
+                                    ),
+
+                                    const SizedBox(width: 12),
+
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+
+                                        children: [
+                                          Text(
+                                            title,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 4),
+
+                                          Text(
+                                            d['patient_name'] ?? "-",
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 4),
+
+                                          Text(
+                                            d['layanan'] ?? "-",
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 6),
+
+                                          Text(
+                                            "${jam.day}/${jam.month}/${jam.year} • ${jam.hour}:${jam.minute.toString().padLeft(2, '0')}",
+
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
   }
 
   Future<void> logout() async {
@@ -195,7 +464,44 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
                         ),
                       ),
                       const Spacer(),
-                      const Icon(Icons.notifications_none),
+                      InkWell(
+                        onTap: showNotifications,
+
+                        borderRadius: BorderRadius.circular(30),
+
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Stack(
+                            children: [
+                              const Icon(
+                                Icons.notifications_none,
+                                color: Colors.black87,
+                              ),
+
+                              if (hasUnreadNotification)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 20),
                       const CircleAvatar(
                         backgroundColor: Colors.green,

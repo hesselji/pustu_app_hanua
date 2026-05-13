@@ -88,6 +88,7 @@ class _PatientRegisterScreenState
       'tanggal': Timestamp.fromDate(finalDateTime),
       'layanan': selectedLayanan,
       'status': "Pending",
+      'is_cleared': false,
       'created_at': Timestamp.now(),
     });
 
