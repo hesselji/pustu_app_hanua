@@ -5,22 +5,37 @@ class WebMedicalRecordScreen extends StatefulWidget {
   const WebMedicalRecordScreen({super.key});
 
   @override
-  State<WebMedicalRecordScreen> createState() =>
-      _WebMedicalRecordScreenState();
+  State<WebMedicalRecordScreen> createState() => _WebMedicalRecordScreenState();
 }
 
-class _WebMedicalRecordScreenState
-    extends State<WebMedicalRecordScreen> {
+class _WebMedicalRecordScreenState extends State<WebMedicalRecordScreen> {
   String? selectedPatientId;
   String? selectedPatientName;
   DateTime? selectedDate;
   String searchText = "";
+  List<String> daftarDiagnosa = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadDiagnosa();
+  }
 
   String formatDate(DateTime date) {
     const months = [
       "",
-      "Jan","Feb","Mar","Apr","Mei","Jun",
-      "Jul","Agu","Sep","Okt","Nov","Des"
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "Mei",
+      "Jun",
+      "Jul",
+      "Agu",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Des",
     ];
     return "${date.day} ${months[date.month]} ${date.year}";
   }
@@ -40,8 +55,269 @@ class _WebMedicalRecordScreenState
     }
   }
 
-  Widget input(String label, TextEditingController c,
-      {String? suffix}) {
+  Future<void> loadDiagnosa() async {
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection("disease_master")
+            .orderBy("nama")
+            .get();
+
+    setState(() {
+      daftarDiagnosa = snapshot.docs.map((e) => e['nama'].toString()).toList();
+    });
+  }
+
+  Future<void> tambahDiagnosaBaru() async {
+    final controller = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Tambah Diagnosa"),
+
+            content: TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: "Masukkan nama penyakit",
+              ),
+            ),
+
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Batal"),
+              ),
+
+              ElevatedButton(
+                onPressed: () async {
+                  final namaBaru = controller.text.trim();
+
+                  if (namaBaru.isEmpty) return;
+
+                  final sudahAda = daftarDiagnosa.any(
+                    (e) => e.toLowerCase() == namaBaru.toLowerCase(),
+                  );
+
+                  if (sudahAda) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Diagnosa sudah ada")),
+                    );
+                    return;
+                  }
+
+                  await FirebaseFirestore.instance
+                      .collection("disease_master")
+                      .add({
+                        "nama": namaBaru.toUpperCase(),
+                        "created_at": FieldValue.serverTimestamp(),
+                      });
+
+                  Navigator.pop(context);
+
+                  await loadDiagnosa();
+
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Diagnosa berhasil ditambahkan"),
+                    ),
+                  );
+                },
+                child: const Text("Simpan"),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Future<void> pilihDiagnosa(TextEditingController diagnosaController) async {
+    final searchController = TextEditingController();
+
+    List<String> filtered = List.from(daftarDiagnosa);
+
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: const Text("Pilih Diagnosa"),
+
+              content: SizedBox(
+                width: 400,
+                height: 450,
+
+                child: Column(
+                  children: [
+                    /// SEARCH
+                    TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintText: "Cari penyakit...",
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+
+                      onChanged: (value) {
+                        setModalState(() {
+                          filtered =
+                              daftarDiagnosa.where((item) {
+                                return item.toLowerCase().contains(
+                                  value.toLowerCase(),
+                                );
+                              }).toList();
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    Expanded(
+                      child:
+                          filtered.isEmpty
+                              ? const Center(child: Text("Tidak ada data"))
+                              : ListView.builder(
+                                itemCount: filtered.length,
+                                itemBuilder: (context, index) {
+                                  final item = filtered[index];
+
+                                  return Card(
+                                    child: ListTile(
+                                      title: Text(item),
+
+                                      onTap: () {
+                                        diagnosaController.text = item;
+                                        Navigator.pop(context);
+                                      },
+
+                                      trailing: Transform.translate(
+                                        offset: const Offset(12, 0),
+
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.red,
+                                          ),
+
+                                          onPressed: () async {
+                                            bool? confirm = await showDialog(
+                                              context: context,
+                                              builder:
+                                                  (_) => AlertDialog(
+                                                    title: const Text(
+                                                      "Hapus Diagnosa",
+                                                    ),
+                                                    content: Text(
+                                                      "Yakin ingin menghapus \"$item\" ?",
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                            context,
+                                                            false,
+                                                          );
+                                                        },
+                                                        child: const Text(
+                                                          "Batal",
+                                                        ),
+                                                      ),
+
+                                                      ElevatedButton(
+                                                        style:
+                                                            ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                            ),
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                            context,
+                                                            true,
+                                                          );
+                                                        },
+                                                        child: const Text(
+                                                          "Hapus",
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                            );
+
+                                            if (confirm != true) return;
+
+                                            final snapshot =
+                                                await FirebaseFirestore.instance
+                                                    .collection(
+                                                      "disease_master",
+                                                    )
+                                                    .where(
+                                                      "nama",
+                                                      isEqualTo: item,
+                                                    )
+                                                    .get();
+
+                                            for (var doc in snapshot.docs) {
+                                              await doc.reference.delete();
+                                            }
+
+                                            await loadDiagnosa();
+
+                                            setModalState(() {
+                                              filtered = List.from(
+                                                daftarDiagnosa,
+                                              );
+                                            });
+
+                                            if (!mounted) return;
+
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Diagnosa berhasil dihapus",
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await tambahDiagnosaBaru();
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text("Tambah"),
+                ),
+
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Tutup"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget input(String label, TextEditingController c, {String? suffix}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
@@ -52,8 +328,7 @@ class _WebMedicalRecordScreenState
           suffixText: suffix,
           filled: true,
           fillColor: Colors.grey.shade100,
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );
@@ -63,73 +338,77 @@ class _WebMedicalRecordScreenState
   void showDetail(Map<String, dynamic> d) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          width: 580,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-
-              /// HEADER
-              Row(
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Container(
+              width: 580,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.medical_services,
-                      color: Colors.green),
-                  const SizedBox(width: 10),
-                  const Text("Detail Rekam Medis",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18)),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  )
-                ],
-              ),
-
-              const Divider(),
-
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
+                  /// HEADER
+                  Row(
                     children: [
-
-                      _card("Informasi", [
-                        _item("Tanggal", d['tanggal']),
-                        _item("Keluhan", d['keluhan']),
-                        _item("Diagnosa", d['diagnosa']),
-                        _item("Terapi", d['terapi']),
-                      ]),
-
-                      _card("Vital Sign", [
-                        _item("Suhu", "${d['suhu']} °C"),
-                        _item("Nadi", "${d['nadi']} x/menit"),
-                        _item("TD",
-                            "${d['td_sistolik']}/${d['td_diastolik']} mmHg"),
-                      ]),
-
-                      _card("Laboratorium", [
-                        _item("Gula Darah", "${d['gula_darah']} mg/dL"),
-                        _item("Kolesterol", "${d['kolesterol']} mg/dL"),
-                        _item("Asam Urat", "${d['asam_urat']} mg/dL"),
-                      ]),
-
-                      _card("Alergi", [
-                        _item("Obat", d['alergi_obat']),
-                        _item("Makanan", d['alergi_makanan']),
-                      ]),
+                      const Icon(Icons.medical_services, color: Colors.green),
+                      const SizedBox(width: 10),
+                      const Text(
+                        "Detail Rekam Medis",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
                   ),
-                ),
+
+                  const Divider(),
+
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _card("Informasi", [
+                            _item("Tanggal", d['tanggal']),
+                            _item("Keluhan", d['keluhan']),
+                            _item("Diagnosa", d['diagnosa']),
+                            _item("Terapi", d['terapi']),
+                          ]),
+
+                          _card("Vital Sign", [
+                            _item("Suhu", "${d['suhu']} °C"),
+                            _item("Nadi", "${d['nadi']} x/menit"),
+                            _item(
+                              "TD",
+                              "${d['td_sistolik']}/${d['td_diastolik']} mmHg",
+                            ),
+                          ]),
+
+                          _card("Laboratorium", [
+                            _item("Gula Darah", "${d['gula_darah']} mg/dL"),
+                            _item("Kolesterol", "${d['kolesterol']} mg/dL"),
+                            _item("Asam Urat", "${d['asam_urat']} mg/dL"),
+                          ]),
+
+                          _card("Alergi", [
+                            _item("Obat", d['alergi_obat']),
+                            _item("Makanan", d['alergi_makanan']),
+                          ]),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -144,12 +423,15 @@ class _WebMedicalRecordScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
           const SizedBox(height: 8),
-          ...children
+          ...children,
         ],
       ),
     );
@@ -161,8 +443,10 @@ class _WebMedicalRecordScreenState
       child: Row(
         children: [
           Expanded(child: Text(title)),
-          Text(value?.toString() ?? "-",
-              style: const TextStyle(fontWeight: FontWeight.w500))
+          Text(
+            value?.toString() ?? "-",
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -173,45 +457,46 @@ class _WebMedicalRecordScreenState
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Konfirmasi Hapus"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Ketik 'HAPUS' untuk melanjutkan"),
-            TextField(controller: confirm),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Batal")),
-          ElevatedButton(
-            onPressed: () async {
-              if (confirm.text != "HAPUS") return;
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Konfirmasi Hapus"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Ketik 'HAPUS' untuk melanjutkan"),
+                TextField(controller: confirm),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Batal"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (confirm.text != "HAPUS") return;
 
-              await FirebaseFirestore.instance
-                  .collection("patients")
-                  .doc(selectedPatientId)
-                  .collection("medical_records")
-                  .doc(id)
-                  .update({
-                "is_deleted": true,
-                "deleted_at": FieldValue.serverTimestamp(),
-              });
+                  await FirebaseFirestore.instance
+                      .collection("patients")
+                      .doc(selectedPatientId)
+                      .collection("medical_records")
+                      .doc(id)
+                      .update({
+                        "is_deleted": true,
+                        "deleted_at": FieldValue.serverTimestamp(),
+                      });
 
-              if (!mounted) return;
-              Navigator.pop(context);
-            },
-            child: const Text("Hapus"),
-          )
-        ],
-      ),
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                },
+                child: const Text("Hapus"),
+              ),
+            ],
+          ),
     );
   }
 
   void showForm({String? id, Map<String, dynamic>? data}) {
-
     String tanggalText = data?['tanggal'] ?? "";
 
     final keluhan = TextEditingController(text: data?['keluhan']);
@@ -227,164 +512,198 @@ class _WebMedicalRecordScreenState
     final kolesterol = TextEditingController(text: data?['kolesterol']);
     final asam = TextEditingController(text: data?['asam_urat']);
 
-    final alergiObat =
-        TextEditingController(text: data?['alergi_obat']);
-    final alergiMakanan =
-        TextEditingController(text: data?['alergi_makanan']);
+    final alergiObat = TextEditingController(text: data?['alergi_obat']);
+    final alergiMakanan = TextEditingController(text: data?['alergi_makanan']);
 
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        child: StatefulBuilder(
-          builder: (context, setModal) {
-            return Container(
-              width: 520,
-              padding: const EdgeInsets.all(20),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Text(id == null
-                        ? "Tambah Rekam Medis"
-                        : "Edit Rekam Medis"),
+      builder:
+          (_) => Dialog(
+            child: StatefulBuilder(
+              builder: (context, setModal) {
+                return Container(
+                  width: 520,
+                  padding: const EdgeInsets.all(20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Text(
+                          id == null
+                              ? "Tambah Rekam Medis"
+                              : "Edit Rekam Medis",
+                        ),
 
-                    const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                    TextField(
-                      readOnly: true,
-                      controller: TextEditingController(text: tanggalText),
-                      decoration: const InputDecoration(
-                        labelText: "Tanggal",
-                        suffixIcon: Icon(Icons.date_range),
-                      ),
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                        );
-
-                        if (picked != null) {
-                          setModal(() {
-                            tanggalText = formatDate(picked);
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    TextField(controller: keluhan, decoration: const InputDecoration(labelText: "Keluhan")),
-                    TextField(controller: diagnosa, decoration: const InputDecoration(labelText: "Diagnosa")),
-                    TextField(controller: terapi, decoration: const InputDecoration(labelText: "Terapi")),
-
-                    const Divider(),
-
-                    input("Suhu", suhu, suffix: "°C"),
-                    input("Nadi", nadi, suffix: "x/menit"),
-                    input("TD Sistolik", tdS, suffix: "mmHg"),
-                    input("TD Diastolik", tdD, suffix: "mmHg"),
-
-                    const Divider(),
-
-                    input("Gula Darah", gula, suffix: "mg/dL"),
-                    input("Kolesterol", kolesterol, suffix: "mg/dL"),
-                    input("Asam Urat", asam, suffix: "mg/dL"),
-
-                    const Divider(),
-
-                    TextField(
-                        controller: alergiObat,
-                        decoration:
-                            const InputDecoration(labelText: "Alergi Obat")),
-
-                    TextField(
-                        controller: alergiMakanan,
-                        decoration: const InputDecoration(
-                            labelText: "Alergi Makanan")),
-
-                    const SizedBox(height: 20),
-
-                    ElevatedButton.icon(
-                      onPressed: () async {
-
-                        /// 🔐 KONFIRMASI SIMPAN
-                        final confirmController = TextEditingController();
-
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Text("Konfirmasi Simpan"),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text("Ketik 'SIMPAN' untuk melanjutkan"),
-                                TextField(controller: confirmController),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text("Batal")),
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (confirmController.text == "SIMPAN") {
-                                    Navigator.pop(context, true);
-                                  }
-                                },
-                                child: const Text("Lanjut"),
-                              ),
-                            ],
+                        TextField(
+                          readOnly: true,
+                          controller: TextEditingController(text: tanggalText),
+                          decoration: const InputDecoration(
+                            labelText: "Tanggal",
+                            suffixIcon: Icon(Icons.date_range),
                           ),
-                        );
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now(),
+                            );
 
-                        if (confirm != true) return;
+                            if (picked != null) {
+                              setModal(() {
+                                tanggalText = formatDate(picked);
+                              });
+                            }
+                          },
+                        ),
 
-                        final dataMap = {
-                          "keluhan": keluhan.text,
-                          "diagnosa": diagnosa.text,
-                          "terapi": terapi.text,
-                          "suhu": suhu.text,
-                          "nadi": nadi.text,
-                          "td_sistolik": tdS.text,
-                          "td_diastolik": tdD.text,
-                          "gula_darah": gula.text,
-                          "kolesterol": kolesterol.text,
-                          "asam_urat": asam.text,
-                          "alergi_obat": alergiObat.text,
-                          "alergi_makanan": alergiMakanan.text,
-                          "tanggal": tanggalText,
-                          "is_deleted": false,
-                        };
+                        const SizedBox(height: 10),
 
-                        if (id == null) {
-                          await FirebaseFirestore.instance
-                              .collection("patients")
-                              .doc(selectedPatientId)
-                              .collection("medical_records")
-                              .add(dataMap);
-                        } else {
-                          await FirebaseFirestore.instance
-                              .collection("patients")
-                              .doc(selectedPatientId)
-                              .collection("medical_records")
-                              .doc(id)
-                              .update(dataMap);
-                        }
+                        TextField(
+                          controller: keluhan,
+                          decoration: const InputDecoration(
+                            labelText: "Keluhan",
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => pilihDiagnosa(diagnosa),
 
-                        if (!mounted) return;
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.save),
-                      label: const Text("Simpan"),
-                    )
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+                          child: AbsorbPointer(
+                            child: TextField(
+                              controller: diagnosa,
+                              decoration: const InputDecoration(
+                                labelText: "Diagnosa",
+                                suffixIcon: Icon(Icons.arrow_drop_down),
+                              ),
+                            ),
+                          ),
+                        ),
+                        TextField(
+                          controller: terapi,
+                          decoration: const InputDecoration(
+                            labelText: "Terapi",
+                          ),
+                        ),
+
+                        const Divider(),
+
+                        input("Suhu", suhu, suffix: "°C"),
+                        input("Nadi", nadi, suffix: "x/menit"),
+                        input("TD Sistolik", tdS, suffix: "mmHg"),
+                        input("TD Diastolik", tdD, suffix: "mmHg"),
+
+                        const Divider(),
+
+                        input("Gula Darah", gula, suffix: "mg/dL"),
+                        input("Kolesterol", kolesterol, suffix: "mg/dL"),
+                        input("Asam Urat", asam, suffix: "mg/dL"),
+
+                        const Divider(),
+
+                        TextField(
+                          controller: alergiObat,
+                          decoration: const InputDecoration(
+                            labelText: "Alergi Obat",
+                          ),
+                        ),
+
+                        TextField(
+                          controller: alergiMakanan,
+                          decoration: const InputDecoration(
+                            labelText: "Alergi Makanan",
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            /// 🔐 KONFIRMASI SIMPAN
+                            final confirmController = TextEditingController();
+
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (_) => AlertDialog(
+                                    title: const Text("Konfirmasi Simpan"),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          "Ketik 'SIMPAN' untuk melanjutkan",
+                                        ),
+                                        TextField(
+                                          controller: confirmController,
+                                        ),
+                                      ],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, false),
+                                        child: const Text("Batal"),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          if (confirmController.text ==
+                                              "SIMPAN") {
+                                            Navigator.pop(context, true);
+                                          }
+                                        },
+                                        child: const Text("Lanjut"),
+                                      ),
+                                    ],
+                                  ),
+                            );
+
+                            if (confirm != true) return;
+
+                            final dataMap = {
+                              "keluhan": keluhan.text,
+                              "diagnosa": diagnosa.text,
+                              "terapi": terapi.text,
+                              "suhu": suhu.text,
+                              "nadi": nadi.text,
+                              "td_sistolik": tdS.text,
+                              "td_diastolik": tdD.text,
+                              "gula_darah": gula.text,
+                              "kolesterol": kolesterol.text,
+                              "asam_urat": asam.text,
+                              "alergi_obat": alergiObat.text,
+                              "alergi_makanan": alergiMakanan.text,
+                              "tanggal": tanggalText,
+                              "is_deleted": false,
+                            };
+
+                            if (id == null) {
+                              await FirebaseFirestore.instance
+                                  .collection("patients")
+                                  .doc(selectedPatientId)
+                                  .collection("medical_records")
+                                  .add(dataMap);
+                            } else {
+                              await FirebaseFirestore.instance
+                                  .collection("patients")
+                                  .doc(selectedPatientId)
+                                  .collection("medical_records")
+                                  .doc(id)
+                                  .update(dataMap);
+                            }
+
+                            if (!mounted) return;
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.save),
+                          label: const Text("Simpan"),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
     );
   }
 
@@ -400,8 +719,8 @@ class _WebMedicalRecordScreenState
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: TextField(
-                  onChanged: (v) =>
-                      setState(() => searchText = v.toLowerCase()),
+                  onChanged:
+                      (v) => setState(() => searchText = v.toLowerCase()),
                   decoration: const InputDecoration(
                     hintText: "Cari pasien...",
                     prefixIcon: Icon(Icons.search),
@@ -410,9 +729,10 @@ class _WebMedicalRecordScreenState
               ),
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection("patients")
-                      .snapshots(),
+                  stream:
+                      FirebaseFirestore.instance
+                          .collection("patients")
+                          .snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
@@ -420,17 +740,16 @@ class _WebMedicalRecordScreenState
 
                     var docs = snapshot.data!.docs;
 
-                    docs = docs.where((doc) {
-                      final nama =
-                          doc['nama'].toString().toLowerCase();
-                      return nama.contains(searchText);
-                    }).toList();
+                    docs =
+                        docs.where((doc) {
+                          final nama = doc['nama'].toString().toLowerCase();
+                          return nama.contains(searchText);
+                        }).toList();
 
                     return ListView.builder(
                       itemCount: docs.length,
                       itemBuilder: (context, i) {
-                        final d =
-                            docs[i].data() as Map<String, dynamic>;
+                        final d = docs[i].data() as Map<String, dynamic>;
 
                         return ListTile(
                           title: Text(d['nama']),
@@ -454,148 +773,170 @@ class _WebMedicalRecordScreenState
         const SizedBox(width: 20),
 
         Expanded(
-          child: selectedPatientId == null
-              ? const Center(child: Text("Pilih pasien"))
-              : Column(
-                  children: [
-                    Row(
-                      children: [
-                        Text("Rekam Medis - $selectedPatientName"),
-                        const Spacer(),
+          child:
+              selectedPatientId == null
+                  ? const Center(child: Text("Pilih pasien"))
+                  : Column(
+                    children: [
+                      Row(
+                        children: [
+                          Text("Rekam Medis - $selectedPatientName"),
+                          const Spacer(),
 
-                        Row(
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: pickDate,
-                              icon: const Icon(Icons.date_range),
-                              label: Text(selectedDate == null
-                                  ? "Filter"
-                                  : formatDate(selectedDate!)),
-                            ),
-                            if (selectedDate != null)
-                              IconButton(
-                                icon: const Icon(Icons.close,
-                                    color: Colors.red),
-                                onPressed: () {
-                                  setState(() => selectedDate = null);
-                                },
+                          Row(
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: pickDate,
+                                icon: const Icon(Icons.date_range),
+                                label: Text(
+                                  selectedDate == null
+                                      ? "Filter"
+                                      : formatDate(selectedDate!),
+                                ),
                               ),
-                          ],
-                        ),
-
-                        const SizedBox(width: 10),
-
-                        ElevatedButton.icon(
-                          onPressed: () => showForm(),
-                          icon: const Icon(Icons.add),
-                          label: const Text("Tambah"),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Expanded(
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection("patients")
-                            .doc(selectedPatientId)
-                            .collection("medical_records")
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-
-                          var docs = snapshot.data!.docs;
-
-                          docs = docs.where((doc) {
-                            final d = doc.data() as Map<String, dynamic>;
-                            return d['is_deleted'] != true;
-                          }).toList();
-
-                          if (selectedDate != null) {
-                            final t = formatDate(selectedDate!);
-                            docs = docs.where((doc) {
-                              return doc['tanggal'] == t;
-                            }).toList();
-                          }
-
-                          return ListView.builder(
-                            itemCount: docs.length,
-                            itemBuilder: (context, i) {
-                              final doc = docs[i];
-                              final d =
-                                  doc.data() as Map<String, dynamic>;
-
-                              return Container(
-                                margin:
-                                    const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius:
-                                      BorderRadius.circular(16),
+                              if (selectedDate != null)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () {
+                                    setState(() => selectedDate = null);
+                                  },
                                 ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(d['tanggal']),
-                                    Text("Keluhan: ${d['keluhan']}"),
+                            ],
+                          ),
 
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.visibility),
-                                          onPressed: () => showDetail(d),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.edit),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (_) => AlertDialog(
-                                                title: const Text("Konfirmasi"),
-                                                content: const Text(
-                                                    "Yakin ingin edit data ini?"),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(context),
-                                                      child: const Text("Batal")),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      Navigator.pop(context);
-                                                      showForm(
-                                                          id: doc.id, data: d);
-                                                    },
-                                                    child:
-                                                        const Text("Lanjut"),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete),
-                                          onPressed: () =>
-                                              deleteRecord(doc.id),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
+                          const SizedBox(width: 10),
+
+                          ElevatedButton.icon(
+                            onPressed: () => showForm(),
+                            icon: const Icon(Icons.add),
+                            label: const Text("Tambah"),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-        )
+
+                      const SizedBox(height: 20),
+
+                      Expanded(
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream:
+                              FirebaseFirestore.instance
+                                  .collection("patients")
+                                  .doc(selectedPatientId)
+                                  .collection("medical_records")
+                                  .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+
+                            var docs = snapshot.data!.docs;
+
+                            docs =
+                                docs.where((doc) {
+                                  final d = doc.data() as Map<String, dynamic>;
+                                  return d['is_deleted'] != true;
+                                }).toList();
+
+                            if (selectedDate != null) {
+                              final t = formatDate(selectedDate!);
+                              docs =
+                                  docs.where((doc) {
+                                    return doc['tanggal'] == t;
+                                  }).toList();
+                            }
+
+                            return ListView.builder(
+                              itemCount: docs.length,
+                              itemBuilder: (context, i) {
+                                final doc = docs[i];
+                                final d = doc.data() as Map<String, dynamic>;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(d['tanggal']),
+                                      Text("Keluhan: ${d['keluhan']}"),
+
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.visibility),
+                                            onPressed: () => showDetail(d),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.edit),
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder:
+                                                    (_) => AlertDialog(
+                                                      title: const Text(
+                                                        "Konfirmasi",
+                                                      ),
+                                                      content: const Text(
+                                                        "Yakin ingin edit data ini?",
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed:
+                                                              () =>
+                                                                  Navigator.pop(
+                                                                    context,
+                                                                  ),
+                                                          child: const Text(
+                                                            "Batal",
+                                                          ),
+                                                        ),
+                                                        ElevatedButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                              context,
+                                                            );
+                                                            showForm(
+                                                              id: doc.id,
+                                                              data: d,
+                                                            );
+                                                          },
+                                                          child: const Text(
+                                                            "Lanjut",
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete),
+                                            onPressed:
+                                                () => deleteRecord(doc.id),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+        ),
       ],
     );
   }
