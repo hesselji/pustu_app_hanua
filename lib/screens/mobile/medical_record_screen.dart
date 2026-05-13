@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_medical_record_screen.dart';
 import 'medical_record_detail_screen.dart';
 import 'edit_medical_record_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MedicalRecordScreen extends StatefulWidget {
   final String patientId;
@@ -69,20 +70,22 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
       int day = int.parse(parts[0]);
       int year = int.parse(parts[2]);
 
-      int month = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Agu",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Des"
-      ].indexOf(parts[1]) + 1;
+      int month =
+          [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "Mei",
+            "Jun",
+            "Jul",
+            "Agu",
+            "Sep",
+            "Okt",
+            "Nov",
+            "Des",
+          ].indexOf(parts[1]) +
+          1;
 
       return DateTime(year, month, day);
     } catch (e) {
@@ -90,71 +93,289 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
     }
   }
 
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+
+            title: Row(
+              children: const [
+                Icon(Icons.error, color: Colors.red),
+                SizedBox(width: 10),
+                Text("Validasi Gagal"),
+              ],
+            ),
+
+            content: Text(message),
+
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+
+                child: const Text("Mengerti"),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+
+            title: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Colors.green),
+                SizedBox(width: 10),
+                Text("Berhasil"),
+              ],
+            ),
+
+            content: Text(message),
+
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+    );
+  }
+
   /// 🔥 DELETE
   void showDeleteDialog(String recordId) {
     final confirmController = TextEditingController();
 
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    bool obscure = true;
+
+    bool check1 = false;
+    bool check2 = false;
+    bool check3 = false;
+
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text("Hapus Rekam Medis"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Tindakan ini tidak disarankan.\n\n"
-                  "Ketik 'HAPUS' untuk melanjutkan.",
-                  style: TextStyle(color: Colors.red),
+
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModal) {
+            
+
+            return AlertDialog(
+              title: const Text("Verifikasi Penghapusan"),
+
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.red,
+                      size: 60,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    const Text(
+                      "Tindakan ini sensitif dan akan tercatat dalam audit sistem.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    /// LAYER 1
+                    TextField(
+                      controller: confirmController,
+
+                      decoration: const InputDecoration(
+                        labelText: "Ketik HAPUS",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    /// LAYER 2 EMAIL
+                    TextField(
+                      controller: emailController,
+
+                      decoration: const InputDecoration(
+                        labelText: "Email Admin",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    /// PASSWORD
+                    TextField(
+                      controller: passwordController,
+                      obscureText: obscure,
+
+                      decoration: InputDecoration(
+                        labelText: "Password Admin",
+                        border: const OutlineInputBorder(),
+
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscure ? Icons.visibility_off : Icons.visibility,
+                          ),
+
+                          onPressed: () {
+                            setModal(() {
+                              obscure = !obscure;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    /// LAYER 3
+                    CheckboxListTile(
+                      value: check1,
+
+                      onChanged: (v) {
+                        setModal(() {
+                          check1 = v!;
+                        });
+                      },
+
+                      title: const Text(
+                        "Saya memahami tindakan ini tercatat dalam audit sistem",
+                      ),
+                    ),
+
+                    CheckboxListTile(
+                      value: check2,
+
+                      onChanged: (v) {
+                        setModal(() {
+                          check2 = v!;
+                        });
+                      },
+
+                      title: const Text(
+                        "Saya bertanggung jawab atas tindakan ini",
+                      ),
+                    ),
+
+                    CheckboxListTile(
+                      value: check3,
+
+                      onChanged: (v) {
+                        setModal(() {
+                          check3 = v!;
+                        });
+                      },
+
+                      title: const Text(
+                        "Saya yakin penghapusan data diperlukan",
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: confirmController,
-                  decoration: const InputDecoration(
-                    hintText: "Ketik HAPUS",
-                  ),
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Batal"),
+                ),
+
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+
+                  onPressed: () async {
+                    /// VALIDASI CHECKBOX
+                    if (!check1 || !check2 || !check3) {
+                      showErrorDialog(
+                        "Semua pernyataan wajib dicentang terlebih dahulu.",
+                      );
+
+                      return;
+                    }
+
+                    try {
+                      /// VALIDASI KETIK HAPUS
+                      if (confirmController.text != "HAPUS") {
+                        showErrorDialog("Konfirmasi HAPUS tidak valid");
+
+                        return;
+                      }
+
+                      final user = FirebaseAuth.instance.currentUser;
+
+                      if (user == null) return;
+
+                      final credential = EmailAuthProvider.credential(
+                        email: emailController.text.trim(),
+                        password: passwordController.text.trim(),
+                      );
+
+                      await user.reauthenticateWithCredential(credential);
+
+                      /// SOFT DELETE
+                      await FirebaseFirestore.instance
+                          .collection("patients")
+                          .doc(widget.patientId)
+                          .collection("medical_records")
+                          .doc(recordId)
+                          .update({
+                            "is_deleted": true,
+                            "deleted_at": FieldValue.serverTimestamp(),
+                            "deleted_by": user.email,
+                          });
+
+                      if (!mounted) return;
+
+                      Navigator.pop(context);
+
+                      showSuccessDialog("Data rekam medis berhasil dihapus");
+                    } catch (e) {
+                      showErrorDialog(
+                        "Autentikasi admin gagal.\n\nPeriksa kembali email dan password.",
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.delete),
+
+                  label: const Text("Hapus"),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Batal"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
-                onPressed: () async {
-                  if (confirmController.text != "HAPUS") {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Konfirmasi tidak valid"),
-                      ),
-                    );
-                    return;
-                  }
-
-                  await FirebaseFirestore.instance
-                      .collection("patients")
-                      .doc(widget.patientId)
-                      .collection("medical_records")
-                      .doc(recordId)
-                      .update({
-                    "is_deleted": true,
-                    "deleted_at": FieldValue.serverTimestamp(),
-                  });
-
-                  Navigator.pop(context);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Data berhasil dihapus")),
-                  );
-                },
-                child: const Text("Hapus"),
-              ),
-            ],
-          ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -194,12 +415,18 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.nama,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  widget.nama,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text("NIK: ${widget.nik}",
-                    style: TextStyle(color: Colors.grey[600])),
+                Text(
+                  "NIK: ${widget.nik}",
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
               ],
             ),
           ),
@@ -221,9 +448,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                   children: [
                     const Icon(Icons.calendar_today),
                     const SizedBox(width: 10),
-                    Text(
-                      selectedDate.isEmpty ? "Pilih tanggal" : selectedDate,
-                    ),
+                    Text(selectedDate.isEmpty ? "Pilih tanggal" : selectedDate),
                     const Spacer(),
                     if (selectedDate.isNotEmpty)
                       IconButton(
@@ -231,7 +456,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                         onPressed: () {
                           setState(() => selectedDate = "");
                         },
-                      )
+                      ),
                   ],
                 ),
               ),
@@ -243,11 +468,12 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
           /// LIST
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection("patients")
-                  .doc(widget.patientId)
-                  .collection("medical_records")
-                  .snapshots(), // 🔥 tanpa orderBy
+              stream:
+                  FirebaseFirestore.instance
+                      .collection("patients")
+                      .doc(widget.patientId)
+                      .collection("medical_records")
+                      .snapshots(), // 🔥 tanpa orderBy
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -256,16 +482,17 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                 final docs = snapshot.data!.docs;
 
                 /// FILTER + DELETE
-                var filtered = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
+                var filtered =
+                    docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
 
-                  if (data['is_deleted'] == true) return false;
+                      if (data['is_deleted'] == true) return false;
 
-                  final tgl = data['tanggal'] ?? "";
+                      final tgl = data['tanggal'] ?? "";
 
-                  if (selectedDate.isEmpty) return true;
-                  return tgl == selectedDate;
-                }).toList();
+                      if (selectedDate.isEmpty) return true;
+                      return tgl == selectedDate;
+                    }).toList();
 
                 /// 🔥 SORT DESCENDING
                 filtered.sort((a, b) {
@@ -295,7 +522,10 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today, color: Colors.green),
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.green,
+                            ),
                             const SizedBox(width: 12),
 
                             Expanded(
@@ -315,9 +545,12 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(data['tanggal'] ?? "-",
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
+                                    Text(
+                                      data['tanggal'] ?? "-",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                     Text(data['keluhan'] ?? "-"),
                                   ],
                                 ),
@@ -327,16 +560,232 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => EditMedicalRecordScreen(
-                                          patientId: widget.patientId,
-                                          recordId: doc.id,
-                                          data: data,
-                                        ),
-                                  ),
+                                final confirmController =
+                                    TextEditingController();
+
+                                final emailController = TextEditingController();
+                                final passwordController =
+                                    TextEditingController();
+
+                                bool obscure = true;
+
+                                bool check1 = false;
+                                bool check2 = false;
+                                bool check3 = false;
+
+                                showDialog(
+                                  context: context,
+
+                                  builder: (_) {
+                                    return StatefulBuilder(
+                                      builder: (context, setModal) {
+                                     
+
+                                        return AlertDialog(
+                                          title: const Text(
+                                            "Verifikasi Edit Rekam Medis",
+                                          ),
+
+                                          content: SingleChildScrollView(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+
+                                              children: [
+                                                const Icon(
+                                                  Icons.edit_note,
+                                                  color: Colors.orange,
+                                                  size: 60,
+                                                ),
+
+                                                const SizedBox(height: 15),
+
+                                                TextField(
+                                                  controller: confirmController,
+
+                                                  decoration:
+                                                      const InputDecoration(
+                                                        labelText: "Ketik EDIT",
+                                                        border:
+                                                            OutlineInputBorder(),
+                                                      ),
+                                                ),
+
+                                                const SizedBox(height: 15),
+
+                                                TextField(
+                                                  controller: emailController,
+
+                                                  decoration:
+                                                      const InputDecoration(
+                                                        labelText:
+                                                            "Email Admin",
+                                                        border:
+                                                            OutlineInputBorder(),
+                                                      ),
+                                                ),
+
+                                                const SizedBox(height: 15),
+
+                                                TextField(
+                                                  controller:
+                                                      passwordController,
+                                                  obscureText: obscure,
+
+                                                  decoration: InputDecoration(
+                                                    labelText: "Password Admin",
+                                                    border:
+                                                        const OutlineInputBorder(),
+
+                                                    suffixIcon: IconButton(
+                                                      icon: Icon(
+                                                        obscure
+                                                            ? Icons
+                                                                .visibility_off
+                                                            : Icons.visibility,
+                                                      ),
+
+                                                      onPressed: () {
+                                                        setModal(() {
+                                                          obscure = !obscure;
+                                                        });
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 20),
+
+                                                CheckboxListTile(
+                                                  value: check1,
+                                                  onChanged: (v) {
+                                                    setModal(() {
+                                                      check1 = v!;
+                                                    });
+                                                  },
+                                                  title: const Text(
+                                                    "Saya memahami perubahan akan tercatat",
+                                                  ),
+                                                ),
+
+                                                CheckboxListTile(
+                                                  value: check2,
+                                                  onChanged: (v) {
+                                                    setModal(() {
+                                                      check2 = v!;
+                                                    });
+                                                  },
+                                                  title: const Text(
+                                                    "Saya bertanggung jawab atas perubahan data",
+                                                  ),
+                                                ),
+
+                                                CheckboxListTile(
+                                                  value: check3,
+                                                  onChanged: (v) {
+                                                    setModal(() {
+                                                      check3 = v!;
+                                                    });
+                                                  },
+                                                  title: const Text(
+                                                    "Saya yakin perubahan data diperlukan",
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(context),
+                                              child: const Text("Batal"),
+                                            ),
+
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                /// VALIDASI CHECKBOX
+                                                if (!check1 ||
+                                                    !check2 ||
+                                                    !check3) {
+                                                  showErrorDialog(
+                                                    "Semua pernyataan wajib dicentang terlebih dahulu.",
+                                                  );
+
+                                                  return;
+                                                }
+
+                                                try {
+                                                  /// VALIDASI KETIK EDIT
+                                                  if (confirmController.text !=
+                                                      "EDIT") {
+                                                    showErrorDialog(
+                                                      "Konfirmasi EDIT tidak valid",
+                                                    );
+
+                                                    return;
+                                                  }
+
+                                                  final user =
+                                                      FirebaseAuth
+                                                          .instance
+                                                          .currentUser;
+
+                                                  if (user == null) return;
+
+                                                  final credential =
+                                                      EmailAuthProvider.credential(
+                                                        email:
+                                                            emailController.text
+                                                                .trim(),
+
+                                                        password:
+                                                            passwordController
+                                                                .text
+                                                                .trim(),
+                                                      );
+
+                                                  await user
+                                                      .reauthenticateWithCredential(
+                                                        credential,
+                                                      );
+
+                                                  if (!mounted) return;
+
+                                                  Navigator.pop(context);
+
+                                                  showSuccessDialog(
+                                                    "DATA BERHASIL DIEDIT",
+                                                  );
+
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder:
+                                                          (
+                                                            _,
+                                                          ) => EditMedicalRecordScreen(
+                                                            patientId:
+                                                                widget
+                                                                    .patientId,
+                                                            recordId: doc.id,
+                                                            data: data,
+                                                          ),
+                                                    ),
+                                                  );
+                                                } catch (e) {
+                                                  showErrorDialog(
+                                                    "Autentikasi admin gagal.\n\nPeriksa kembali email dan password.",
+                                                  );
+                                                }
+                                              },
+
+                                              child: const Text("Lanjut"),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
                                 );
                               },
                             ),
