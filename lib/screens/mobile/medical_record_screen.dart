@@ -356,7 +356,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                             "deleted_by": user.email,
                           });
 
-                      if (!mounted) return;
+                     if (!context.mounted) return;
 
                       Navigator.pop(context);
 
@@ -749,7 +749,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                                                         credential,
                                                       );
 
-                                                  if (!mounted) return;
+                                                 if (!context.mounted) return;
 
                                                   Navigator.pop(context);
 
