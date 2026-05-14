@@ -105,9 +105,7 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
 
     setState(() => isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Berhasil diupdate")),
-    );
+  
 
     Navigator.pop(context);
   }
