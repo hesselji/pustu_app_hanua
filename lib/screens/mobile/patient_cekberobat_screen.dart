@@ -208,43 +208,46 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
 
                     const SizedBox(height: 30),
 
-                    /// 🔥 HASIL
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: resultData == null
-                          ? const Center(child: Text("DETAIL BEROBAT"))
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Nama: ${resultData!['patient_name']}"),
-                                Text("NIK: ${resultData!['nik']}"),
-                                const SizedBox(height: 5),
-                                Text("Keluhan: ${resultData!['keluhan']}"),
-                                Text("Layanan: ${resultData!['layanan']}"),
-                                Text("Status: ${resultData!['status']}"),
-                                const SizedBox(height: 5),
-                                Text(
-                                  "Tanggal: ${formatTanggal((resultData!['tanggal'] as Timestamp).toDate())}",
+                                        /// 🔥 HASIL MUNCUL HANYA JIKA DATA DITEMUKAN
+                    if (resultData != null) ...[
+                      const SizedBox(height: 30),
+
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Center(
+                              child: Text(
+                                "DETAIL BEROBAT",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
-                              ],
+                              ),
                             ),
-                    ),
 
-                    const SizedBox(height: 40),
+                            const SizedBox(height: 15),
 
-                    const Center(
-                      child: Text(
-                        "COPYRIGHT BY ....",
-                        style: TextStyle(fontSize: 12),
+                            Text("Nama: ${resultData!['patient_name']}"),
+                            Text("NIK: ${resultData!['nik']}"),
+                            const SizedBox(height: 5),
+                            Text("Keluhan: ${resultData!['keluhan']}"),
+                            Text("Layanan: ${resultData!['layanan']}"),
+                            Text("Status: ${resultData!['status']}"),
+                            const SizedBox(height: 5),
+                            Text(
+                              "Tanggal: ${formatTanggal((resultData!['tanggal'] as Timestamp).toDate())}",
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 20),
+                    ],
                   ],
                 ),
               ),
