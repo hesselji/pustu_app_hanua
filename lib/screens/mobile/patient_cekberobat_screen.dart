@@ -109,32 +109,41 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
+    return GestureDetector(
+  onTap: () {
+    FocusScope.of(context).unfocus();
+  },
+  child: Scaffold(
+    body: SafeArea(
+      child: Column(
+        children: [
 
-            /// HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Spacer(),
-                  _logo("assets/logo_kemenkes.png"),
-                  const SizedBox(width: 10),
-                  _logo("assets/logo_pustu.png"),
-                  const Spacer(),
-                  const Text("Pustu Hanua",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
+          /// HEADER (tetap)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    Navigator.pop(context);
+                  },
+                ),
+                const Spacer(),
+                _logo("assets/logo_kemenkes.png"),
+                const SizedBox(width: 10),
+                _logo("assets/logo_pustu.png"),
+                const Spacer(),
+                const Text(
+                  "Pustu Hanua",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
+          ),
 
-            const Divider(),
+          const Divider(),
 
             /// CONTENT
             Expanded(
@@ -275,8 +284,9 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// INPUT FIELD
   Widget _inputField({required TextEditingController controller}) {
