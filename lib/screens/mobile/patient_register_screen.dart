@@ -123,31 +123,54 @@ class _PatientRegisterScreenState
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+Widget build(BuildContext context) {
+
+  return GestureDetector(
+    onTap: () {
+      FocusScope.of(context).unfocus();
+    },
+    child: Scaffold(
       body: SafeArea(
         child: Column(
           children: [
 
-            /// HEADER (tetap)
+            /// HEADER
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 10,
+              ),
               child: Row(
                 children: [
+
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      Navigator.pop(context);
+                    },
                   ),
+
                   const Spacer(),
+
                   _logo("assets/logo_kemenkes.png"),
+
                   const SizedBox(width: 10),
+
                   _logo("assets/logo_pustu.png"),
+
                   const Spacer(),
-                  const Text("Pustu Hanua",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+
+                  const Text(
+                    "Pustu Hanua",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
+        
 
             const Divider(),
 
@@ -367,7 +390,8 @@ class _PatientRegisterScreenState
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   /// 🔸 INPUT FIELD
