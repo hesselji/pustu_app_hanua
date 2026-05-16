@@ -214,35 +214,55 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
 
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: Colors.green.withOpacity(0.2),
+                            width: 1.5,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Center(
+                           Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Center(
                               child: Text(
                                 "DETAIL BEROBAT",
                                 style: TextStyle(
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
                             ),
+                          ),
 
                             const SizedBox(height: 15),
-
-                            Text("Nama: ${resultData!['patient_name']}"),
-                            Text("NIK: ${resultData!['nik']}"),
-                            const SizedBox(height: 5),
-                            Text("Keluhan: ${resultData!['keluhan']}"),
-                            Text("Layanan: ${resultData!['layanan']}"),
-                            Text("Status: ${resultData!['status']}"),
-                            const SizedBox(height: 5),
-                            Text(
-                              "Tanggal: ${formatTanggal((resultData!['tanggal'] as Timestamp).toDate())}",
+                            _detailItem("Nama", resultData!['patient_name']),
+                            _detailItem("NIK", resultData!['nik']),
+                            _detailItem("Keluhan", resultData!['keluhan']),
+                            _detailItem("Layanan", resultData!['layanan']),
+                            _detailItem("Status", resultData!['status']),
+                            _detailItem(
+                              "Tanggal",
+                              formatTanggal(
+                                (resultData!['tanggal'] as Timestamp).toDate(),
+                              ),
                             ),
                           ],
                         ),
@@ -295,4 +315,30 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
       ),
     );
   }
+
+  /// 🔥 ITEM DETAIL
+Widget _detailItem(String title, String value) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        SizedBox(
+          width: 80,
+          child: Text(
+            "$title :",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+
+        Expanded(
+          child: Text(value),
+        ),
+      ],
+    ),
+  );
+}
 }
