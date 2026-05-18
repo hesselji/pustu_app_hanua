@@ -39,19 +39,25 @@ class _PatientRegisterScreenState
 
   /// 🔥 DATE PICKER
   Future<void> pilihTanggal() async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2024),
-      lastDate: DateTime(2030),
-    );
+  final DateTime today = DateTime.now();
 
-    if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
+  DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: today,
+    firstDate: DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ),
+    lastDate: DateTime(2030),
+  );
+
+  if (picked != null) {
+    setState(() {
+      selectedDate = picked;
+    });
   }
+}
 
   /// Tambah Data
   Future<void> kirimData() async {
@@ -123,55 +129,96 @@ class _PatientRegisterScreenState
   }
 
   @override
-Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
 
-  return GestureDetector(
-    onTap: () {
-      FocusScope.of(context).unfocus();
-    },
-    child: Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
 
-            /// HEADER
-            Padding(
+            /// 🔥 HEADER MODERN
+            Container(
+              margin: const EdgeInsets.all(15),
               padding: const EdgeInsets.symmetric(
                 horizontal: 15,
-                vertical: 10,
+                vertical: 18,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
 
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
+                  /// 🔙 BACK BUTTON
+                  GestureDetector(
+                    onTap: () {
                       FocusScope.of(context).unfocus();
                       Navigator.pop(context);
                     },
+                    child: const Icon(Icons.arrow_back),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(width: 15),
 
-                  _logo("assets/logo_kemenkes.png"),
+                  /// 🔥 LOGO KIRI
+                  Image.asset(
+                    "assets/logo_kemenkes.png",
+                    width: 45,
+                    height: 45,
+                  ),
 
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 15),
 
-                  _logo("assets/logo_pustu.png"),
+                  /// 🔥 TEXT TENGAH
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
 
-                  const Spacer(),
+                        Text(
+                          "Pustu Hanua",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
 
-                  const Text(
-                    "Pustu Hanua",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                        SizedBox(height: 4),
+
+                        Text(
+                          "Layanan Kesehatan",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+
+                  /// 🔥 LOGO KANAN
+                  Image.asset(
+                    "assets/logo_pustu.png",
+                    width: 45,
+                    height: 45,
                   ),
                 ],
               ),
             ),
         
-
             const Divider(),
 
             /// CONTENT
@@ -360,8 +407,7 @@ Widget build(BuildContext context) {
                         ),
                       ),
                     ),
-                     
-                    
+                               
                     /// 🔥 RESET
                     GestureDetector(
                       onTap: resetForm,
@@ -376,13 +422,7 @@ Widget build(BuildContext context) {
                     ),
 
                     const SizedBox(height: 30),
-
-                    const Center(
-                      child: Text("COPYRIGHT BY ....",
-                          style: TextStyle(fontSize: 12)),
-                    ),
-
-                    const SizedBox(height: 20),
+                    
                   ],
                 ),
               ),
@@ -433,30 +473,6 @@ Widget build(BuildContext context) {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-    /// 🔸 LOGO IMAGE
-  Widget _logo(String imagePath) {
-    return Container(
-      width: 45,
-      height: 45,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(5),
-      child: Image.asset(
-        imagePath,
-        fit: BoxFit.contain,
       ),
     );
   }
