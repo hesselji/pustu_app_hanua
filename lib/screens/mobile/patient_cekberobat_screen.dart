@@ -118,30 +118,85 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
       child: Column(
         children: [
 
-          /// HEADER (tetap)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    FocusScope.of(context).unfocus();
-                    Navigator.pop(context);
-                  },
+
+    /// 🔥 HEADER MODERN
+  Container(
+    margin: const EdgeInsets.all(15),
+    padding: const EdgeInsets.symmetric(
+      horizontal: 15,
+      vertical: 18,
+    ),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(25),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+
+        /// 🔙 BACK BUTTON
+        GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            Navigator.pop(context);
+          },
+          child: const Icon(Icons.arrow_back),
+        ),
+
+        const SizedBox(width: 15),
+
+        /// 🔥 LOGO KIRI
+        Image.asset(
+          "assets/logo_kemenkes.png",
+          width: 45,
+          height: 45,
+        ),
+
+        const SizedBox(width: 15),
+
+        /// 🔥 TEXT TENGAH
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+
+              Text(
+                "Pustu Hanua",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
-                const Spacer(),
-                _logo("assets/logo_kemenkes.png"),
-                const SizedBox(width: 10),
-                _logo("assets/logo_pustu.png"),
-                const Spacer(),
-                const Text(
-                  "Pustu Hanua",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+
+              SizedBox(height: 4),
+
+              Text(
+                "Layanan Kesehatan",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
+
+        /// 🔥 LOGO KANAN
+        Image.asset(
+          "assets/logo_pustu.png",
+          width: 45,
+          height: 45,
+        ),
+      ],
+    ),
+  ),
 
           const Divider(),
 
@@ -229,13 +284,13 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
                           borderRadius: BorderRadius.circular(15),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
+                              color: Colors.black.withValues(alpha: 0.08),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
                           ],
                           border: Border.all(
-                            color: Colors.green.withOpacity(0.2),
+                            color: Colors.green.withValues(alpha: 0.2),
                             width: 1.5,
                           ),
                         ),
@@ -300,55 +355,30 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
       ),
     );
   }
+  
+  /// 🔥 ITEM DETAIL
+  Widget _detailItem(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
 
-  /// LOGO
-      /// 🔸 LOGO IMAGE
-  Widget _logo(String imagePath) {
-    return Container(
-      width: 45,
-      height: 45,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+          SizedBox(
+            width: 80,
+            child: Text(
+              "$title :",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: Text(value),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(5),
-      child: Image.asset(
-        imagePath,
-        fit: BoxFit.contain,
-      ),
     );
   }
-
-  /// 🔥 ITEM DETAIL
-Widget _detailItem(String title, String value) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-
-        SizedBox(
-          width: 80,
-          child: Text(
-            "$title :",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-
-        Expanded(
-          child: Text(value),
-        ),
-      ],
-    ),
-  );
-}
-}
+  }
