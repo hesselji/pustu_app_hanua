@@ -3,46 +3,97 @@ import 'package:flutter/material.dart';
 class AboutUsPage extends StatelessWidget {
   const AboutUsPage({super.key});
 
-  @override
+@override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// 🔹 HEADER CUSTOM
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: Row(
-                children: [
-                  /// BACK BUTTON
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
+    return GestureDetector(
+  onTap: () {
+    FocusScope.of(context).unfocus();
+  },
+  child: Scaffold(
+    body: SafeArea(
+      child: Column(
+        children: [
 
-                  /// LOGO KEMENKES
-                  _logo(),
+  /// 🔥 HEADER MODERN
+  Container(
+    margin: const EdgeInsets.all(15),
+    padding: const EdgeInsets.symmetric(
+      horizontal: 15,
+      vertical: 18,
+    ),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(25),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
 
-                  const SizedBox(width: 8),
+        /// 🔙 BACK BUTTON
+        GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            Navigator.pop(context);
+          },
+          child: const Icon(Icons.arrow_back),
+        ),
 
-                  /// LOGO BAKTI HUSADA
-                  _logo(),
+        const SizedBox(width: 15),
 
-                  const Spacer(),
+        /// 🔥 LOGO KIRI
+        Image.asset(
+          "assets/logo_kemenkes.png",
+          width: 45,
+          height: 45,
+        ),
 
-                  /// TITLE
-                  const Text(
-                    "Pustu Hanua",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
+        const SizedBox(width: 15),
+
+        /// 🔥 TEXT TENGAH
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+
+              Text(
+                "Pustu Hanua",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-            ),
 
-            const Divider(),
+              SizedBox(height: 4),
 
+              Text(
+                "Layanan Kesehatan",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        /// 🔥 LOGO KANAN
+        Image.asset(
+          "assets/logo_pustu.png",
+          width: 45,
+          height: 45,
+        ),
+      ],
+    ),
+  ),
+
+          const Divider(),
             /// 🔹 CONTENT
             Expanded(
               child: SingleChildScrollView(
@@ -96,21 +147,24 @@ class AboutUsPage extends StatelessWidget {
                             child: DeveloperItem(
                               name1: "Hessel Josef",
                               name2: "Imanuel",
-                              email: "hesseljosef",
+                              email: "hesseljosef@gmail.com",
+                              image: "assets/hessel.jpeg",
                             ),
                           ),
                           Expanded(
                             child: DeveloperItem(
                               name1: "Mahendra",
                               name2: "Juliansen",
-                              email: "mahendrajuliansen",
+                              email: "m357439@gmail.com",
+                              image: "assets/mahen.jpeg",
                             ),
                           ),
                           Expanded(
                             child: DeveloperItem(
                               name1: "Bagus Rian",
                               name2: "Bahari",
-                              email: "bagusrianbahari",
+                              email: "magusrian09@gmail.com",
+                              image: "assets/bagus.jpeg",
                             ),
                           ),
                         ],
@@ -134,21 +188,9 @@ class AboutUsPage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  /// 🔸 LOGO (placeholder)
-  Widget _logo() {
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: const Icon(Icons.image, size: 16, color: Colors.grey),
-    );
-  }
+    )
+  );
+}
 }
 
 /// 🔸 DEVELOPER ITEM
@@ -156,23 +198,44 @@ class DeveloperItem extends StatelessWidget {
   final String name1;
   final String name2;
   final String email;
+  final String image;
 
   const DeveloperItem({
     super.key,
     required this.name1,
     required this.name2,
     required this.email,
+    required this.image,
   });
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Column(
       children: [
         /// FOTO
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.grey[300],
-          child: const Icon(Icons.person, size: 30, color: Colors.grey),
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.green,
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 5,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              image,
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
 
         const SizedBox(height: 8),
@@ -198,7 +261,7 @@ class DeveloperItem extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const Text(
-          "@mhs.eng.upr.ac.id",
+          "",
           style: TextStyle(fontSize: 10, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
