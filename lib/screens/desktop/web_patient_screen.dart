@@ -36,17 +36,39 @@ class _WebPatientScreenState extends State<WebPatientScreen> {
   final statusList = ["Belum Menikah", "Menikah", "Cerai"];
   final pendidikanList = ["SD", "SMP", "SMA", "D3", "S1", "S2"];
 
-  void hitungUsia(DateTime birthDate) {
-    final now = DateTime.now();
-    int age = now.year - birthDate.year;
+void hitungUsia(DateTime birthDate) {
 
-    if (now.month < birthDate.month ||
-        (now.month == birthDate.month && now.day < birthDate.day)) {
-      age--;
+  final now = DateTime.now();
+
+  int years = now.year - birthDate.year;
+  int months = now.month - birthDate.month;
+
+  /// 🔥 KOREKSI BULAN
+  if (now.day < birthDate.day) {
+    months--;
+  }
+
+  /// 🔥 TOTAL BULAN
+  int totalMonths =
+      (now.year - birthDate.year) * 12 +
+      (now.month - birthDate.month);
+
+  /// 🔥 JIKA < 1 TAHUN
+  if (totalMonths < 12) {
+
+    usia.text = "$totalMonths bulan";
+
+  } else {
+
+    /// 🔥 KOREKSI TAHUN
+    if (months < 0 ||
+        (months == 0 && now.day < birthDate.day)) {
+      years--;
     }
 
-    usia.text = age.toString();
+    usia.text = "$years tahun";
   }
+}
 
   Future<void> pickDate() async {
     DateTime now = DateTime.now();

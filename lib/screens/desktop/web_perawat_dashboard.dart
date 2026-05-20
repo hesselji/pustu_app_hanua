@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'web_patient_screen.dart';
 import 'web_medical_record_screen.dart';
 import 'web_home_screen.dart';
+import 'web_monthly_report_screen.dart';
 
 class WebPerawatDashboard extends StatefulWidget {
   const WebPerawatDashboard({super.key});
@@ -47,6 +48,7 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
     {"icon": Icons.dashboard, "title": "Dashboard"},
     {"icon": Icons.people, "title": "Pasien"},
     {"icon": Icons.medical_services, "title": "Rekam Medis"},
+    {"icon": Icons.analytics, "title": "Laporan"},
   ];
 
   String formatDate(DateTime date) {
@@ -533,6 +535,8 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
         return const WebPatientScreen();
       case 2:
         return const WebMedicalRecordScreen();
+      case 3:
+        return const WebMonthlyReportScreen();
       default:
         return const Center(child: Text("Coming Soon"));
     }

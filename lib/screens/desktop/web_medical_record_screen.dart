@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class WebMedicalRecordScreen extends StatefulWidget {
   const WebMedicalRecordScreen({super.key});
@@ -9,6 +10,59 @@ class WebMedicalRecordScreen extends StatefulWidget {
 }
 
 class _WebMedicalRecordScreenState extends State<WebMedicalRecordScreen> {
+  void showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Colors.green),
+                SizedBox(width: 10),
+                Text("Berhasil"),
+              ],
+            ),
+            content: Text(message),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: Row(
+              children: const [
+                Icon(Icons.warning_amber_rounded, color: Colors.red),
+                SizedBox(width: 10),
+                Text("Peringatan"),
+              ],
+            ),
+            content: Text(message),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+    );
+  }
+
   String? selectedPatientId;
   String? selectedPatientName;
   DateTime? selectedDate;
@@ -453,46 +507,223 @@ class _WebMedicalRecordScreenState extends State<WebMedicalRecordScreen> {
   }
 
   void deleteRecord(String id) {
-    final confirm = TextEditingController();
+    final confirmController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    bool check1 = false;
+    bool check2 = false;
+    bool check3 = false;
 
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text("Konfirmasi Hapus"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("Ketik 'HAPUS' untuk melanjutkan"),
-                TextField(controller: confirm),
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModal) {
+            bool canDelete =
+                confirmController.text == "HAPUS" &&
+                emailController.text.isNotEmpty &&
+                passwordController.text.isNotEmpty &&
+                check1 &&
+                check2 &&
+                check3;
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.red,
+                      size: 70,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    Container(
+                      padding: const EdgeInsets.all(14),
+
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+
+                      child: const Text(
+                        "Tindakan ini sangat sensitif dan akan tercatat permanen dalam audit sistem rekam medis.",
+                        textAlign: TextAlign.center,
+
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    /// LAYER 1
+                    TextField(
+                      controller: confirmController,
+
+                      decoration: InputDecoration(
+                        labelText: "Ketik HAPUS",
+
+                        prefixIcon: const Icon(
+                          Icons.delete_forever,
+                          color: Colors.red,
+                        ),
+
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+
+                      onChanged: (_) => setModal(() {}),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    /// EMAIL
+                    TextField(
+                      controller: emailController,
+
+                      decoration: InputDecoration(
+                        labelText: "Email Admin",
+
+                        prefixIcon: const Icon(Icons.email),
+
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+
+                      onChanged: (_) => setModal(() {}),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    /// PASSWORD
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+
+                      decoration: InputDecoration(
+                        labelText: "Password Admin",
+
+                        prefixIcon: const Icon(Icons.lock),
+
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+
+                      onChanged: (_) => setModal(() {}),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    CheckboxListTile(
+                      value: check1,
+
+                      onChanged: (v) {
+                        setModal(() => check1 = v!);
+                      },
+
+                      title: const Text(
+                        "Saya memahami tindakan ini tercatat dalam audit sistem",
+                      ),
+                    ),
+
+                    CheckboxListTile(
+                      value: check2,
+
+                      onChanged: (v) {
+                        setModal(() => check2 = v!);
+                      },
+
+                      title: const Text(
+                        "Saya bertanggung jawab atas tindakan ini",
+                      ),
+                    ),
+
+                    CheckboxListTile(
+                      value: check3,
+
+                      onChanged: (v) {
+                        setModal(() => check3 = v!);
+                      },
+
+                      title: const Text(
+                        "Saya yakin penghapusan data diperlukan",
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Batal"),
+                ),
+
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+
+                  onPressed:
+                      canDelete
+                          ? () async {
+                            try {
+                              final user = FirebaseAuth.instance.currentUser;
+
+                              if (user == null) return;
+
+                              final credential = EmailAuthProvider.credential(
+                                email: emailController.text.trim(),
+                                password: passwordController.text.trim(),
+                              );
+
+                              await user.reauthenticateWithCredential(
+                                credential,
+                              );
+
+                              await FirebaseFirestore.instance
+                                  .collection("patients")
+                                  .doc(selectedPatientId)
+                                  .collection("medical_records")
+                                  .doc(id)
+                                  .update({
+                                    "is_deleted": true,
+
+                                    "deleted_at": FieldValue.serverTimestamp(),
+
+                                    "deleted_by": user.email,
+                                  });
+
+                              if (!mounted) return;
+
+                              Navigator.pop(context);
+
+                              showSuccessDialog("Rekam medis berhasil dihapus");
+                            } catch (e) {
+                              showErrorDialog("Autentikasi admin gagal");
+                            }
+                          }
+                          : null,
+
+                  icon: const Icon(Icons.delete),
+
+                  label: const Text("Hapus"),
+                ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Batal"),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (confirm.text != "HAPUS") return;
-
-                  await FirebaseFirestore.instance
-                      .collection("patients")
-                      .doc(selectedPatientId)
-                      .collection("medical_records")
-                      .doc(id)
-                      .update({
-                        "is_deleted": true,
-                        "deleted_at": FieldValue.serverTimestamp(),
-                      });
-
-                  if (!mounted) return;
-                  Navigator.pop(context);
-                },
-                child: const Text("Hapus"),
-              ),
-            ],
-          ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -688,7 +919,17 @@ class _WebMedicalRecordScreenState extends State<WebMedicalRecordScreen> {
                                   .doc(selectedPatientId)
                                   .collection("medical_records")
                                   .doc(id)
-                                  .update(dataMap);
+                                  .update({
+                                    ...dataMap,
+
+                                    "edited_at": FieldValue.serverTimestamp(),
+
+                                    "edited_by":
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser
+                                            ?.email,
+                                  });
                             }
 
                             if (!mounted) return;
@@ -878,44 +1119,325 @@ class _WebMedicalRecordScreenState extends State<WebMedicalRecordScreen> {
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.edit),
-                                            onPressed: () {
-                                              showDialog(
+                                            onPressed: () async {
+                                              final confirmController =
+                                                  TextEditingController();
+                                              final emailController =
+                                                  TextEditingController();
+                                              final passwordController =
+                                                  TextEditingController();
+
+                                              bool check1 = false;
+                                              bool check2 = false;
+                                              bool check3 = false;
+
+                                              await showDialog(
                                                 context: context,
-                                                builder:
-                                                    (_) => AlertDialog(
-                                                      title: const Text(
-                                                        "Konfirmasi",
-                                                      ),
-                                                      content: const Text(
-                                                        "Yakin ingin edit data ini?",
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed:
-                                                              () =>
-                                                                  Navigator.pop(
-                                                                    context,
+                                                builder: (_) {
+                                                  return StatefulBuilder(
+                                                    builder: (
+                                                      context,
+                                                      setModal,
+                                                    ) {
+                                                      bool canEdit =
+                                                          confirmController
+                                                                  .text ==
+                                                              "EDIT" &&
+                                                          emailController
+                                                              .text
+                                                              .isNotEmpty &&
+                                                          passwordController
+                                                              .text
+                                                              .isNotEmpty &&
+                                                          check1 &&
+                                                          check2 &&
+                                                          check3;
+
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                          "Verifikasi Edit",
+                                                        ),
+
+                                                        content: SingleChildScrollView(
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              const Icon(
+                                                                Icons.edit_note,
+                                                                color:
+                                                                    Colors
+                                                                        .orange,
+                                                                size: 70,
+                                                              ),
+
+                                                              const SizedBox(
+                                                                height: 15,
+                                                              ),
+
+                                                              Container(
+                                                                padding:
+                                                                    const EdgeInsets.all(
+                                                                      14,
+                                                                    ),
+
+                                                                decoration: BoxDecoration(
+                                                                  color:
+                                                                      Colors
+                                                                          .orange
+                                                                          .shade50,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        14,
+                                                                      ),
+                                                                ),
+
+                                                                child: const Text(
+                                                                  "Perubahan data rekam medis akan tercatat dalam audit sistem dan dapat ditelusuri kembali.",
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+
+                                                                  style: TextStyle(
+                                                                    color:
+                                                                        Colors
+                                                                            .orange,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
                                                                   ),
-                                                          child: const Text(
-                                                            "Batal",
+                                                                ),
+                                                              ),
+
+                                                              const SizedBox(
+                                                                height: 20,
+                                                              ),
+
+                                                              TextField(
+                                                                controller:
+                                                                    confirmController,
+
+                                                                decoration: InputDecoration(
+                                                                  labelText:
+                                                                      "Ketik EDIT",
+
+                                                                  prefixIcon: const Icon(
+                                                                    Icons.edit,
+                                                                    color:
+                                                                        Colors
+                                                                            .orange,
+                                                                  ),
+
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          14,
+                                                                        ),
+                                                                  ),
+                                                                ),
+
+                                                                onChanged:
+                                                                    (_) =>
+                                                                        setModal(
+                                                                          () {},
+                                                                        ),
+                                                              ),
+
+                                                              const SizedBox(
+                                                                height: 15,
+                                                              ),
+
+                                                              TextField(
+                                                                controller:
+                                                                    emailController,
+
+                                                                decoration: InputDecoration(
+                                                                  labelText:
+                                                                      "Email Admin",
+
+                                                                  prefixIcon:
+                                                                      const Icon(
+                                                                        Icons
+                                                                            .email,
+                                                                      ),
+
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          14,
+                                                                        ),
+                                                                  ),
+                                                                ),
+
+                                                                onChanged:
+                                                                    (_) =>
+                                                                        setModal(
+                                                                          () {},
+                                                                        ),
+                                                              ),
+
+                                                              const SizedBox(
+                                                                height: 15,
+                                                              ),
+
+                                                              TextField(
+                                                                controller:
+                                                                    passwordController,
+                                                                obscureText:
+                                                                    true,
+
+                                                                decoration: InputDecoration(
+                                                                  labelText:
+                                                                      "Password Admin",
+
+                                                                  prefixIcon:
+                                                                      const Icon(
+                                                                        Icons
+                                                                            .lock,
+                                                                      ),
+
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          14,
+                                                                        ),
+                                                                  ),
+                                                                ),
+
+                                                                onChanged:
+                                                                    (_) =>
+                                                                        setModal(
+                                                                          () {},
+                                                                        ),
+                                                              ),
+
+                                                              const SizedBox(
+                                                                height: 18,
+                                                              ),
+
+                                                              CheckboxListTile(
+                                                                value: check1,
+
+                                                                onChanged: (v) {
+                                                                  setModal(
+                                                                    () =>
+                                                                        check1 =
+                                                                            v!,
+                                                                  );
+                                                                },
+
+                                                                title: const Text(
+                                                                  "Saya memahami perubahan akan tercatat",
+                                                                ),
+                                                              ),
+
+                                                              CheckboxListTile(
+                                                                value: check2,
+
+                                                                onChanged: (v) {
+                                                                  setModal(
+                                                                    () =>
+                                                                        check2 =
+                                                                            v!,
+                                                                  );
+                                                                },
+
+                                                                title: const Text(
+                                                                  "Saya bertanggung jawab atas perubahan data",
+                                                                ),
+                                                              ),
+
+                                                              CheckboxListTile(
+                                                                value: check3,
+
+                                                                onChanged: (v) {
+                                                                  setModal(
+                                                                    () =>
+                                                                        check3 =
+                                                                            v!,
+                                                                  );
+                                                                },
+
+                                                                title: const Text(
+                                                                  "Saya yakin perubahan data diperlukan",
+                                                                ),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ),
-                                                        ElevatedButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                              context,
-                                                            );
-                                                            showForm(
-                                                              id: doc.id,
-                                                              data: d,
-                                                            );
-                                                          },
-                                                          child: const Text(
-                                                            "Lanjut",
+
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed:
+                                                                () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                    ),
+                                                            child: const Text(
+                                                              "Batal",
+                                                            ),
                                                           ),
-                                                        ),
-                                                      ],
-                                                    ),
+
+                                                          ElevatedButton(
+                                                            onPressed:
+                                                                canEdit
+                                                                    ? () async {
+                                                                      try {
+                                                                        final user =
+                                                                            FirebaseAuth.instance.currentUser;
+
+                                                                        if (user ==
+                                                                            null)
+                                                                          return;
+
+                                                                        final credential = EmailAuthProvider.credential(
+                                                                          email:
+                                                                              emailController.text.trim(),
+                                                                          password:
+                                                                              passwordController.text.trim(),
+                                                                        );
+
+                                                                        await user.reauthenticateWithCredential(
+                                                                          credential,
+                                                                        );
+
+                                                                        if (!mounted)
+                                                                          return;
+
+                                                                        Navigator.pop(
+                                                                          context,
+                                                                        );
+
+                                                                        showSuccessDialog(
+                                                                          "Verifikasi berhasil",
+                                                                        );
+
+                                                                        showForm(
+                                                                          id:
+                                                                              doc.id,
+                                                                          data:
+                                                                              d,
+                                                                        );
+                                                                      } catch (
+                                                                        e
+                                                                      ) {
+                                                                        showErrorDialog(
+                                                                          "Autentikasi admin gagal",
+                                                                        );
+                                                                      }
+                                                                    }
+                                                                    : null,
+
+                                                            child: const Text(
+                                                              "Lanjut",
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
                                               );
                                             },
                                           ),
