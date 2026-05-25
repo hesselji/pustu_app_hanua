@@ -26,20 +26,20 @@ class _WebMonthlyReportScreenState extends State<WebMonthlyReportScreen> {
     "Desember",
   ];
 
-final Map<String, int> bulanMap = {
-  "Jan": 1,
-  "Feb": 2,
-  "Mar": 3,
-  "Apr": 4,
-  "Mei": 5,
-  "Jun": 6,
-  "Jul": 7,
-  "Agu": 8,
-  "Sep": 9,
-  "Okt": 10,
-  "Nov": 11,
-  "Des": 12,
-};
+  final Map<String, int> bulanMap = {
+    "Jan": 1,
+    "Feb": 2,
+    "Mar": 3,
+    "Apr": 4,
+    "Mei": 5,
+    "Jun": 6,
+    "Jul": 7,
+    "Agu": 8,
+    "Sep": 9,
+    "Okt": 10,
+    "Nov": 11,
+    "Des": 12,
+  };
 
   String? selectedBulan;
   int? selectedTahun;
@@ -326,6 +326,9 @@ final Map<String, int> bulanMap = {
 
     Set<String> pasienUnik = {};
 
+    /// 🔥 supaya gender & umur tidak double
+    Set<String> pasienSudahDihitung = {};
+
     int bulanAngka = bulanList.indexOf(selectedBulan!) + 1;
 
     final snapshot = await firestore.collectionGroup("medical_records").get();
@@ -361,10 +364,13 @@ final Map<String, int> bulanMap = {
 
         final p = cachePasien[pasienId];
 
-        if (p != null) {
-          String jk = p["jk"] ?? "";
+        /// 🔥 HITUNG HANYA SEKALI PER PASIEN
+        if (p != null && !pasienSudahDihitung.contains(pasienId)) {
+          pasienSudahDihitung.add(pasienId);
 
-          String tglLahir = p["tgl"] ?? "";
+          String jk = (p["jk"] ?? "").toString();
+
+          String tglLahir = (p["tgl"] ?? "").toString();
 
           int umur = hitungUmurDariTanggal(tglLahir);
 
@@ -419,43 +425,40 @@ final Map<String, int> bulanMap = {
   }
 
   int hitungUmurDariTanggal(String text) {
-  try {
+    try {
+      List<String> parts = text.split(" - ");
 
-    List<String> parts = text.split(" - ");
+      int day = int.parse(parts[0]);
+      int month = int.parse(parts[1]);
+      int year = int.parse(parts[2]);
 
-    int day = int.parse(parts[0]);
-    int month = int.parse(parts[1]);
-    int year = int.parse(parts[2]);
+      DateTime birthDate = DateTime(year, month, day);
 
-    DateTime birthDate = DateTime(year, month, day);
+      DateTime now = DateTime.now();
 
-    DateTime now = DateTime.now();
+      int years = now.year - birthDate.year;
+      int months = now.month - birthDate.month;
 
-    int years = now.year - birthDate.year;
-    int months = now.month - birthDate.month;
+      if (now.day < birthDate.day) {
+        months--;
+      }
 
-    if (now.day < birthDate.day) {
-      months--;
-    }
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
 
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
+      /// 🔥 BAYI < 1 TAHUN
+      if (years <= 0) {
+        return 0;
+      }
 
-    /// 🔥 BAYI < 1 TAHUN
-    if (years <= 0) {
+      return years;
+    } catch (e) {
       return 0;
     }
-
-    return years;
-
-  } catch (e) {
-    return 0;
   }
-}
 
- 
   void kategoriUmur(int usia) {
     if (usia < 1) {
       umurMap["Bayi (0–11 bulan)"] = umurMap["Bayi (0–11 bulan)"]! + 1;
