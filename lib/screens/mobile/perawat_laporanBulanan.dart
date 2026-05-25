@@ -31,14 +31,14 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     "Feb": 2,
     "Mar": 3,
     "Apr": 4,
-    "May": 5,
+    "Mei": 5,
     "Jun": 6,
     "Jul": 7,
-    "Aug": 8,
+    "Agu": 8,
     "Sep": 9,
-    "Oct": 10,
+    "Okt": 10,
     "Nov": 11,
-    "Dec": 12,
+    "Des": 12,
   };
 
   String? selectedBulan;
@@ -352,11 +352,8 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
     Set<String> pasienUnik = {};
 
-    /// 🔥 AGAR GENDER TIDAK DOBEL
-    Set<String> pasienGenderTerhitung = {};
-
-    /// 🔥 AGAR UMUR TIDAK DOBEL
-    Set<String> pasienUmurTerhitung = {};
+    /// 🔥 HITUNG PASIEN HANYA SEKALI
+    Set<String> pasienSudahDihitung = {};
 
     int bulanAngka = bulanList.indexOf(submittedBulan!) + 1;
 
@@ -413,20 +410,15 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
             "diagnosa": m["diagnosa"] ?? "-",
           });
 
-          /// GENDER 1x
-          if (!pasienGenderTerhitung.contains(pasienId)) {
-            pasienGenderTerhitung.add(pasienId);
+          /// 🔥 HITUNG HANYA SEKALI PER PASIEN
+          if (!pasienSudahDihitung.contains(pasienId)) {
+            pasienSudahDihitung.add(pasienId);
 
             if (jk.toLowerCase().contains("laki")) {
               laki++;
             } else {
               perempuan++;
             }
-          }
-
-          /// UMUR 1x
-          if (!pasienUmurTerhitung.contains(pasienId)) {
-            pasienUmurTerhitung.add(pasienId);
 
             int umur = hitungUmur(tgl);
 
@@ -552,10 +544,37 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     return [2025, ...List.generate(now - 2025, (i) => 2026 + i)];
   }
 
-  int hitungUmur(String tgl) {
+  int hitungUmur(String text) {
     try {
-      return DateTime.now().year - int.parse(tgl.split("-")[2]);
-    } catch (_) {
+      List<String> parts = text.split(" - ");
+
+      int day = int.parse(parts[0].trim());
+      int month = int.parse(parts[1].trim());
+      int year = int.parse(parts[2].trim());
+
+      DateTime birthDate = DateTime(year, month, day);
+
+      DateTime now = DateTime.now();
+
+      int years = now.year - birthDate.year;
+      int months = now.month - birthDate.month;
+
+      if (now.day < birthDate.day) {
+        months--;
+      }
+
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      /// 🔥 BAYI < 1 TAHUN
+      if (years <= 0) {
+        return 0;
+      }
+
+      return years;
+    } catch (e) {
       return 0;
     }
   }
