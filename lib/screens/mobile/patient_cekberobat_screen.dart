@@ -109,32 +109,96 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
+    return GestureDetector(
+  onTap: () {
+    FocusScope.of(context).unfocus();
+  },
+  child: Scaffold(
+    body: SafeArea(
+      child: Column(
+        children: [
 
-            /// HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Spacer(),
-                  _logo("Kemenkes"),
-                  const SizedBox(width: 10),
-                  _logo("Pustu"),
-                  const Spacer(),
-                  const Text("Pustu Hanua",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
+
+    /// 🔥 HEADER MODERN
+  Container(
+    margin: const EdgeInsets.all(15),
+    padding: const EdgeInsets.symmetric(
+      horizontal: 15,
+      vertical: 18,
+    ),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(25),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+
+        /// 🔙 BACK BUTTON
+        GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            Navigator.pop(context);
+          },
+          child: const Icon(Icons.arrow_back),
+        ),
+
+        const SizedBox(width: 15),
+
+        /// 🔥 LOGO KIRI
+        Image.asset(
+          "assets/logo_kemenkes.png",
+          width: 45,
+          height: 45,
+        ),
+
+        const SizedBox(width: 15),
+
+        /// 🔥 TEXT TENGAH
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+
+              Text(
+                "Pustu Hanua",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-            ),
 
-            const Divider(),
+              SizedBox(height: 4),
+
+              Text(
+                "Layanan Kesehatan",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        /// 🔥 LOGO KANAN
+        Image.asset(
+          "assets/logo_pustu.png",
+          width: 45,
+          height: 45,
+        ),
+      ],
+    ),
+  ),
+
+          const Divider(),
 
             /// CONTENT
             Expanded(
@@ -208,43 +272,66 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
 
                     const SizedBox(height: 30),
 
-                    /// 🔥 HASIL
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: resultData == null
-                          ? const Center(child: Text("DETAIL BEROBAT"))
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Nama: ${resultData!['patient_name']}"),
-                                Text("NIK: ${resultData!['nik']}"),
-                                const SizedBox(height: 5),
-                                Text("Keluhan: ${resultData!['keluhan']}"),
-                                Text("Layanan: ${resultData!['layanan']}"),
-                                Text("Status: ${resultData!['status']}"),
-                                const SizedBox(height: 5),
-                                Text(
-                                  "Tanggal: ${formatTanggal((resultData!['tanggal'] as Timestamp).toDate())}",
-                                ),
-                              ],
+                                        /// 🔥 HASIL MUNCUL HANYA JIKA DATA DITEMUKAN
+                    if (resultData != null) ...[
+                      const SizedBox(height: 30),
+
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                    ),
+                          ],
+                          border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                           Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                "DETAIL BEROBAT",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
 
-                    const SizedBox(height: 40),
-
-                    const Center(
-                      child: Text(
-                        "COPYRIGHT BY ....",
-                        style: TextStyle(fontSize: 12),
+                            const SizedBox(height: 15),
+                            _detailItem("Nama", resultData!['patient_name']),
+                            _detailItem("NIK", resultData!['nik']),
+                            _detailItem("Keluhan", resultData!['keluhan']),
+                            _detailItem("Layanan", resultData!['layanan']),
+                            _detailItem("Status", resultData!['status']),
+                            _detailItem(
+                              "Tanggal",
+                              formatTanggal(
+                                (resultData!['tanggal'] as Timestamp).toDate(),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 20),
+                    ],
                   ],
                 ),
               ),
@@ -252,8 +339,9 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// INPUT FIELD
   Widget _inputField({required TextEditingController controller}) {
@@ -267,23 +355,30 @@ class _PatientCheckScreenState extends State<PatientCheckScreen> {
       ),
     );
   }
+  
+  /// 🔥 ITEM DETAIL
+  Widget _detailItem(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
 
-  /// LOGO
-  Widget _logo(String text) {
-    return Column(
-      children: [
-        Container(
-          width: 35,
-          height: 35,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(8),
+          SizedBox(
+            width: 80,
+            child: Text(
+              "$title :",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-          child: const Icon(Icons.image, size: 18, color: Colors.grey),
-        ),
-        const SizedBox(height: 2),
-        Text(text, style: const TextStyle(fontSize: 8)),
-      ],
+
+          Expanded(
+            child: Text(value),
+          ),
+        ],
+      ),
     );
   }
-}
+  }
