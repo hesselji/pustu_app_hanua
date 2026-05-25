@@ -12,7 +12,7 @@ class PatientRegisterScreen extends StatefulWidget {
 class _PatientRegisterScreenState
     extends State<PatientRegisterScreen> {
 
-  /// 🔥 CONTROLLER INPUT
+  /// 🔥 CONTROLLER
   final TextEditingController namaController = TextEditingController();
   final TextEditingController nikController = TextEditingController();
   final TextEditingController keluhanController =
@@ -20,109 +20,128 @@ class _PatientRegisterScreenState
 
   /// 🔥 STATE
   DateTime? selectedDate;
-  String selectedLayanan = "";
   TimeOfDay? selectedTime;
 
-  /// Time Picker
+  String selectedLayanan = "";
+
+  /// =========================
+  /// TIME PICKER
+  /// =========================
+
   Future<void> pilihJam() async {
     TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-   );
+    );
 
-  if (picked != null) {
-    setState(() {
-      selectedTime = picked;
+    if (picked != null) {
+      setState(() {
+        selectedTime = picked;
       });
     }
   }
 
-  /// 🔥 DATE PICKER
+  /// =========================
+  /// DATE PICKER
+  /// =========================
+
   Future<void> pilihTanggal() async {
-  final DateTime today = DateTime.now();
+    final DateTime today = DateTime.now();
 
-  DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: today,
-    firstDate: DateTime(
-      today.year,
-      today.month,
-      today.day,
-    ),
-    lastDate: DateTime(2030),
-  );
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: today,
+      firstDate: DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ),
+      lastDate: DateTime(2030),
+    );
 
-  if (picked != null) {
-    setState(() {
-      selectedDate = picked;
-    });
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
   }
-}
 
-  /// Tambah Data
+  /// =========================
+  /// KIRIM DATA
+  /// =========================
+
   Future<void> kirimData() async {
-  if (namaController.text.isEmpty ||
-      nikController.text.isEmpty ||
-      keluhanController.text.isEmpty ||
-      selectedDate == null ||
-      selectedTime == null ||
-      selectedLayanan.isEmpty) {
+    if (namaController.text.isEmpty ||
+        nikController.text.isEmpty ||
+        keluhanController.text.isEmpty ||
+        selectedDate == null ||
+        selectedTime == null ||
+        selectedLayanan.isEmpty) {
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Semua field harus diisi!"),
-        backgroundColor: Colors.red,
-      ),
-    );
-    return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Semua field harus diisi!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+
+      return;
+    }
+
+    try {
+
+      DateTime finalDateTime = DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+        selectedTime!.hour,
+        selectedTime!.minute,
+      );
+
+      await FirebaseFirestore.instance
+          .collection('registrations')
+          .add({
+
+        'patient_name': namaController.text,
+        'nik': nikController.text,
+        'keluhan': keluhanController.text,
+        'tanggal': Timestamp.fromDate(finalDateTime),
+        'layanan': selectedLayanan,
+        'status': "Pending",
+        'is_cleared': false,
+        'created_at': Timestamp.now(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Berhasil mendaftar!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      resetForm();
+
+    } catch (e) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  try {
-    /// 🔥 GABUNGKAN TANGGAL + JAM
-    DateTime finalDateTime = DateTime(
-      selectedDate!.year,
-      selectedDate!.month,
-      selectedDate!.day,
-      selectedTime!.hour,
-      selectedTime!.minute,
-    );
+  /// =========================
+  /// RESET
+  /// =========================
 
-    await FirebaseFirestore.instance.collection('registrations').add({
-      'patient_name': namaController.text,
-      'nik': nikController.text,
-      'keluhan': keluhanController.text,
-      'tanggal': Timestamp.fromDate(finalDateTime),
-      'layanan': selectedLayanan,
-      'status': "Pending",
-      'is_cleared': false,
-      'created_at': Timestamp.now(),
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Berhasil mendaftar!"),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    resetForm();
-
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Gagal: $e"),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-}
-
-  /// 🔥 RESET FORM
   void resetForm() {
     setState(() {
-      nikController.clear();
       namaController.clear();
+      nikController.clear();
       keluhanController.clear();
+
       selectedDate = null;
       selectedTime = null;
       selectedLayanan = "";
@@ -136,321 +155,544 @@ class _PatientRegisterScreenState
       onTap: () {
         FocusScope.of(context).unfocus();
       },
+
       child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FA),
+
         body: SafeArea(
           child: Column(
             children: [
 
-            /// 🔥 HEADER MODERN
-            Container(
-              margin: const EdgeInsets.all(15),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-                vertical: 18,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
+              /// =========================
+              /// HEADER
+              /// =========================
 
-                  /// 🔙 BACK BUTTON
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
-                      Navigator.pop(context);
-                    },
-                    child: const Icon(Icons.arrow_back),
+              Container(
+                margin: const EdgeInsets.all(16),
+
+                padding: const EdgeInsets.all(18),
+
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.green.shade600,
+                      Colors.green.shade400,
+                    ],
                   ),
 
-                  const SizedBox(width: 15),
+                  borderRadius: BorderRadius.circular(28),
 
-                  /// 🔥 LOGO KIRI
-                  Image.asset(
-                    "assets/logo_kemenkes.png",
-                    width: 45,
-                    height: 45,
-                  ),
-
-                  const SizedBox(width: 15),
-
-                  /// 🔥 TEXT TENGAH
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-
-                        Text(
-                          "Pustu Hanua",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-
-                        SizedBox(height: 4),
-
-                        Text(
-                          "Layanan Kesehatan",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.25),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
                     ),
-                  ),
+                  ],
+                ),
 
-                  /// 🔥 LOGO KANAN
-                  Image.asset(
-                    "assets/logo_pustu.png",
-                    width: 45,
-                    height: 45,
-                  ),
-                ],
-              ),
-            ),
-        
-            const Divider(),
-
-            /// CONTENT
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
 
-                    const SizedBox(height: 10),
+                    /// BACK
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
 
-                    const Center(
-                      child: Text(
-                        "FORM DAFTAR BEROBAT",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(width: 15),
 
-                    /// 🔥 STATUS FIRESTORE (tetap)
-                    StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('service_status')
-                          .doc('status')
-                          .snapshots(),
-                      builder: (context, snapshot) {
+                    /// LOGO
+                    Container(
+                      padding: const EdgeInsets.all(10),
 
-                        if (!snapshot.hasData) {
-                          return const CircularProgressIndicator();
-                        }
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
 
-                        final data = snapshot.data!.data()
-                            as Map<String, dynamic>?;
+                      child: Image.asset(
+                        "assets/logo_pustu.png",
+                        width: 40,
+                        height: 40,
+                      ),
+                    ),
 
-                        bool isAvailable = data?['isAvailable'] ?? true;
+                    const SizedBox(width: 15),
 
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: _box(
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text("Status Petugas"),
-                                    Container(
-                                      width: 20,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: isAvailable
-                                            ? Colors.green
-                                            : Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                    /// TEXT
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+
+                          Text(
+                            "Pendaftaran Berobat",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _box(
-                                child: Text(
-                                  isAvailable
-                                      ? "Tersedia"
-                                      : "Tidak Tersedia",
-                                  style: TextStyle(
+                          ),
+
+                          SizedBox(height: 4),
+
+                          Text(
+                            "Pustu Hanua",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              /// =========================
+              /// CONTENT
+              /// =========================
+
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                    children: [
+
+                      /// STATUS
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('service_status')
+                            .doc('status')
+                            .snapshots(),
+
+                        builder: (context, snapshot) {
+
+                          if (!snapshot.hasData) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          final data = snapshot.data!.data()
+                              as Map<String, dynamic>?;
+
+                          bool isAvailable =
+                              data?['isAvailable'] ?? true;
+
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+
+                            child: Row(
+                              children: [
+
+                                Container(
+                                  width: 16,
+                                  height: 16,
+
+                                  decoration: BoxDecoration(
                                     color: isAvailable
                                         ? Colors.green
                                         : Colors.red,
-                                    fontWeight: FontWeight.bold,
+                                    shape: BoxShape.circle,
                                   ),
                                 ),
-                              ),
+
+                                const SizedBox(width: 12),
+
+                                Expanded(
+                                  child: Text(
+                                    isAvailable
+                                        ? "Petugas Sedang Tersedia"
+                                        : "Petugas Tidak Tersedia",
+
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isAvailable
+                                          ? Colors.green
+                                          : Colors.red,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    const Divider(),
-
-                    /// 🔥 DATA PASIEN
-                    /// NAMA
-                    const Text("Nama Pasien"),
-                    const SizedBox(height: 10),
-                    _inputField(controller: namaController),
-
-                    const SizedBox(height: 10),
-
-                    /// NIK
-                    const Text("NIK"),
-                    const SizedBox(height: 10),
-                    _inputField(controller: nikController),
-
-                    const SizedBox(height: 20),
-                    const Divider(),
-
-                    /// 🔥 KELUHAN
-                    const Text("Keluhan Pasien"),
-                    const SizedBox(height: 10),
-                    _inputField(
-                        controller: keluhanController, height: 80),
-
-                    const SizedBox(height: 20),
-                    const Divider(),
-
-                    /// 🔥 TANGGAL
-                    const Text("Tanggal Berobat"),
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: pilihTanggal,
-                      child: Container(
-                        height: 50,
-                        color: Colors.grey[300],
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          selectedDate == null
-                              ? "Pilih tanggal"
-                              : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-                        ),
+                          );
+                        },
                       ),
-                    ),
 
-                    const SizedBox(height: 10),
+                      const SizedBox(height: 20),
 
-                    /// 🔥 JAM
-                    GestureDetector(
-                      onTap: pilihJam,
-                      child: Container(
-                        height: 50,
-                        color: Colors.grey[300],
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          selectedTime == null
-                              ? "Pilih jam"
-                              : "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}",
-                        ),
+                      /// =========================
+                      /// DATA PASIEN
+                      /// =========================
+
+                      _sectionTitle("Data Pasien"),
+
+                      const SizedBox(height: 12),
+
+                      _inputField(
+                        title: "Nama Pasien",
+                        hint: "Masukkan nama lengkap",
+                        controller: namaController,
+                        icon: Icons.person_outline,
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
-                    const Divider(),
+                      const SizedBox(height: 16),
 
-                    /// 🔥 JENIS LAYANAN
-                    const Center(child: Text("Pilih Jenis Layanan")),
+                      _inputField(
+                        title: "NIK",
+                        hint: "Masukkan NIK",
+                        controller: nikController,
+                        icon: Icons.badge_outlined,
+                        keyboardType: TextInputType.number,
+                      ),
 
-                    const SizedBox(height: 15),
+                      const SizedBox(height: 20),
 
-                    Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _button("Home Care"),
-                        _button("Pustu Visit"),
-                      ],
-                    ),
+                      /// =========================
+                      /// KELUHAN
+                      /// =========================
 
-                    const SizedBox(height: 30),
-                    const Divider(),
+                      _sectionTitle("Keluhan"),
 
-                    /// BUTTON KIRIM
-                    GestureDetector(
-                      onTap: kirimData,
-                      child: Container(
+                      const SizedBox(height: 12),
+
+                      _inputField(
+                        title: "Keluhan Pasien",
+                        hint: "Tuliskan keluhan pasien",
+                        controller: keluhanController,
+                        icon: Icons.medical_information_outlined,
+                        maxLines: 4,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// =========================
+                      /// JADWAL
+                      /// =========================
+
+                      _sectionTitle("Jadwal Berobat"),
+
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+
+                          Expanded(
+                            child: _pickerCard(
+                              title: "Tanggal",
+                              value: selectedDate == null
+                                  ? "Pilih tanggal"
+                                  : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+
+                              icon: Icons.calendar_month,
+
+                              onTap: pilihTanggal,
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: _pickerCard(
+                              title: "Jam",
+                              value: selectedTime == null
+                                  ? "Pilih jam"
+                                  : "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}",
+
+                              icon: Icons.access_time,
+
+                              onTap: pilihJam,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// =========================
+                      /// LAYANAN
+                      /// =========================
+
+                      _sectionTitle("Jenis Layanan"),
+
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+
+                          Expanded(
+                            child: _layananButton(
+                              "Home Care",
+                              Icons.home_outlined,
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: _layananButton(
+                              "Pustu Visit",
+                              Icons.local_hospital_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      /// =========================
+                      /// BUTTON
+                      /// =========================
+
+                      SizedBox(
                         width: double.infinity,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "KIRIM",
+
+                        child: ElevatedButton.icon(
+                          onPressed: kirimData,
+
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+
+                          icon: const Icon(
+                            Icons.send,
+                            color: Colors.white,
+                          ),
+
+                          label: const Text(
+                            "KIRIM PENDAFTARAN",
+
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
+                              fontSize: 15,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                               
-                    /// 🔥 RESET
-                    GestureDetector(
-                      onTap: resetForm,
-                      child: Container(
+
+                      const SizedBox(height: 12),
+
+                      SizedBox(
                         width: double.infinity,
-                        height: 40,
-                        color: Colors.grey[300],
-                        child: const Center(
-                          child: Text("BERSIHKAN"),
+
+                        child: OutlinedButton.icon(
+                          onPressed: resetForm,
+
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                            ),
+
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+
+                          icon: const Icon(Icons.refresh),
+
+                          label: const Text("BERSIHKAN FORM"),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 30),
-                    
-                  ],
+                      const SizedBox(height: 30),
+                    ],
+                  ),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// =========================
+  /// TITLE
+  /// =========================
+
+  Widget _sectionTitle(String title) {
+    return Text(
+      title,
+
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  /// =========================
+  /// INPUT
+  /// =========================
+
+  Widget _inputField({
+    required String title,
+    required String hint,
+    required TextEditingController controller,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+
+        Text(
+          title,
+
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+
+          decoration: InputDecoration(
+            hintText: hint,
+
+            prefixIcon: Icon(icon),
+
+            filled: true,
+            fillColor: Colors.white,
+
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// =========================
+  /// PICKER CARD
+  /// =========================
+
+  Widget _pickerCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+
+    return GestureDetector(
+      onTap: onTap,
+
+      child: Container(
+        padding: const EdgeInsets.all(16),
+
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+
+            Row(
+              children: [
+
+                Icon(icon, color: Colors.green),
+
+                const SizedBox(width: 8),
+
+                Text(
+                  title,
+
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              value,
+
+              style: TextStyle(
+                color: value.contains("Pilih")
+                    ? Colors.grey
+                    : Colors.black,
               ),
             ),
           ],
         ),
       ),
-    ),
-  );
-  }
-
-  /// 🔸 INPUT FIELD
-  Widget _inputField(
-      {required TextEditingController controller, double height = 50}) {
-    return Container(
-      height: height,
-      color: Colors.grey[300],
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: TextField(
-        controller: controller,
-        decoration: const InputDecoration(border: InputBorder.none),
-      ),
     );
   }
 
-  /// 🔸 BUTTON PILIH LAYANAN
-  Widget _button(String text) {
+  /// =========================
+  /// BUTTON LAYANAN
+  /// =========================
+
+  Widget _layananButton(String text, IconData icon) {
+
     bool isSelected = selectedLayanan == text;
 
     return GestureDetector(
@@ -459,32 +701,61 @@ class _PatientRegisterScreenState
           selectedLayanan = text;
         });
       },
-      child: Container(
-        width: 120,
-        height: 40,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.green : Colors.grey[300],
-          borderRadius: BorderRadius.circular(5),
+
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+
+        padding: const EdgeInsets.symmetric(
+          vertical: 18,
         ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-            ),
+
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.green
+              : Colors.white,
+
+          borderRadius: BorderRadius.circular(18),
+
+          border: Border.all(
+            color: isSelected
+                ? Colors.green
+                : Colors.grey.shade300,
           ),
+
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+
+        child: Column(
+          children: [
+
+            Icon(
+              icon,
+              color: isSelected
+                  ? Colors.white
+                  : Colors.green,
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              text,
+
+              style: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : Colors.black,
+
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  /// 🔸 BOX STATUS
-  Widget _box({required Widget child}) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.grey[300],
-      child: Center(child: child),
     );
   }
 }
