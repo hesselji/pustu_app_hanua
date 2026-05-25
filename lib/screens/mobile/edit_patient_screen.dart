@@ -5,11 +5,7 @@ class EditPatientScreen extends StatefulWidget {
   final String id;
   final Map data;
 
-  const EditPatientScreen({
-    super.key,
-    required this.id,
-    required this.data,
-  });
+  const EditPatientScreen({super.key, required this.id, required this.data});
 
   @override
   State<EditPatientScreen> createState() => _EditPatientScreenState();
@@ -31,7 +27,13 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
   bool isLoading = false;
 
   final List<String> jkList = ["Laki-Laki", "Perempuan"];
-  final List<String> agamaList = ["Islam", "Kristen", "Katolik", "Hindu", "Budha"];
+  final List<String> agamaList = [
+    "Islam",
+    "Kristen",
+    "Katolik",
+    "Hindu",
+    "Budha",
+  ];
   final List<String> statusList = ["Belum Menikah", "Menikah", "Cerai"];
   final List<String> pendidikanList = ["SD", "SMP", "SMA", "D3", "S1", "S2"];
 
@@ -51,9 +53,10 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
     jk = jkList.contains(d['jk']) ? d['jk'] : jkList.first;
     agama = agamaList.contains(d['agama']) ? d['agama'] : agamaList.first;
     status = statusList.contains(d['status']) ? d['status'] : statusList.first;
-    pendidikan = pendidikanList.contains(d['pendidikan'])
-        ? d['pendidikan']
-        : pendidikanList.first;
+    pendidikan =
+        pendidikanList.contains(d['pendidikan'])
+            ? d['pendidikan']
+            : pendidikanList.first;
   }
 
   /// 📅 DATE PICKER + AUTO USIA
@@ -70,15 +73,38 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
     if (picked != null) {
       String formatted = "${picked.day} - ${picked.month} - ${picked.year}";
 
-      int umur = now.year - picked.year;
-      if (now.month < picked.month ||
-          (now.month == picked.month && now.day < picked.day)) {
-        umur--;
+      int years = now.year - picked.year;
+      int months = now.month - picked.month;
+
+      if (now.day < picked.day) {
+        months--;
+      }
+
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      String hasilUsia;
+
+      /// 🔥 BAYI
+      if (years <= 0) {
+        int totalBulan = months;
+
+        if (totalBulan <= 0) {
+          totalBulan = 1;
+        }
+
+        hasilUsia = "$totalBulan Bulan";
+      }
+      /// 🔥 TAHUN
+      else {
+        hasilUsia = "$years Tahun";
       }
 
       setState(() {
         tgl.text = formatted;
-        usia.text = umur.toString();
+        usia.text = hasilUsia;
       });
     }
   }
@@ -91,21 +117,19 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
         .collection('patients')
         .doc(widget.id)
         .update({
-      'nik': nik.text,
-      'nama': nama.text,
-      'jk': jk,
-      'tgl': tgl.text,
-      'usia': usia.text,
-      'alamat': alamat.text,
-      'agama': agama,
-      'status': status,
-      'pendidikan': pendidikan,
-      'pekerjaan': pekerjaan.text,
-    });
+          'nik': nik.text,
+          'nama': nama.text,
+          'jk': jk,
+          'tgl': tgl.text,
+          'usia': usia.text,
+          'alamat': alamat.text,
+          'agama': agama,
+          'status': status,
+          'pendidikan': pendidikan,
+          'pekerjaan': pekerjaan.text,
+        });
 
     setState(() => isLoading = false);
-
-  
 
     Navigator.pop(context);
   }
@@ -118,8 +142,10 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text("Edit Data Pasien",
-            style: TextStyle(color: Colors.black)),
+        title: const Text(
+          "Edit Data Pasien",
+          style: TextStyle(color: Colors.black),
+        ),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
 
@@ -145,9 +171,7 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
 
                 GestureDetector(
                   onTap: pickDate,
-                  child: AbsorbPointer(
-                    child: _input("Tanggal Lahir", tgl),
-                  ),
+                  child: AbsorbPointer(child: _input("Tanggal Lahir", tgl)),
                 ),
 
                 _input("Usia", usia, readOnly: true),
@@ -192,15 +216,16 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        "SIMPAN PERUBAHAN",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                child:
+                    isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                          "SIMPAN PERUBAHAN",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
-                      ),
               ),
             ),
           ],
@@ -217,10 +242,7 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
         ],
       ),
       child: Row(
@@ -237,40 +259,32 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
           Expanded(
             child: Text(
               nama.text.isEmpty ? "-" : nama.text,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
   /// 🔹 CARD SECTION
-  Widget _sectionCard({
-    required String title,
-    required List<Widget> children,
-  }) {
+  Widget _sectionCard({required String title, required List<Widget> children}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
           const SizedBox(height: 10),
           ...children,
         ],
@@ -279,8 +293,11 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
   }
 
   /// 🔹 INPUT
-  Widget _input(String label, TextEditingController c,
-      {bool readOnly = false}) {
+  Widget _input(
+    String label,
+    TextEditingController c, {
+    bool readOnly = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
@@ -311,9 +328,10 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
       child: DropdownButtonFormField<String>(
         value: items.contains(value) ? value : items.first,
         onChanged: onChanged,
-        items: items
-            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-            .toList(),
+        items:
+            items
+                .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                .toList(),
         decoration: InputDecoration(
           labelText: label,
           filled: true,

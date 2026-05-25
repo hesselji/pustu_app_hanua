@@ -92,7 +92,7 @@ class PatientDetailScreen extends StatelessWidget {
               children: [
                 _item("Jenis Kelamin", data['jk']),
                 _item("Tanggal Lahir", data['tgl']),
-                _item("Usia", "${data['usia'] ?? '-'} Tahun"),
+                _item("Usia", data['usia']),
               ],
             ),
 

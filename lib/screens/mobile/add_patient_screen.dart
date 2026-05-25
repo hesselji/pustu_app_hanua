@@ -32,17 +32,37 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   final pendidikanList = ["SD", "SMP", "SMA", "D3", "S1", "S2"];
 
   /// 🔥 HITUNG USIA
-  void hitungUsia(DateTime birthDate) {
-    final now = DateTime.now();
-    int age = now.year - birthDate.year;
+void hitungUsia(DateTime birthDate) {
+  final now = DateTime.now();
 
-    if (now.month < birthDate.month ||
-        (now.month == birthDate.month && now.day < birthDate.day)) {
-      age--;
+  int years = now.year - birthDate.year;
+  int months = now.month - birthDate.month;
+
+  if (now.day < birthDate.day) {
+    months--;
+  }
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  /// 🔥 JIKA MASIH BAYI
+  if (years <= 0) {
+    int totalBulan = months;
+
+    if (totalBulan <= 0) {
+      totalBulan = 1;
     }
 
-    usia.text = age.toString();
+    usia.text = "$totalBulan Bulan";
   }
+
+  /// 🔥 JIKA SUDAH TAHUN
+  else {
+    usia.text = "$years Tahun";
+  }
+}
 
   /// 📅 DATE PICKER
   Future<void> pickDate() async {
