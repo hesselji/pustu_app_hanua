@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class AddMedicalRecordScreen extends StatefulWidget {
   final String patientId;
@@ -39,6 +40,7 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
   void initState() {
     super.initState();
     loadDiagnosa();
+    initializeDateFormatting('id_ID', null);
   }
 
   /// 📅 DATE PICKER
@@ -51,7 +53,7 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
     );
 
     if (picked != null) {
-      String formatted = DateFormat("dd MMM yyyy").format(picked);
+      String formatted = DateFormat("dd MMM yyyy", "id_ID").format(picked);
       setState(() {
         tgl.text = formatted;
       });

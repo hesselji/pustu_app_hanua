@@ -12,6 +12,7 @@ import 'screens/desktop/web_home_screen.dart';
 import 'screens/desktop/web_perawat_dashboard.dart'; // 🔥 TAMBAH
 import 'widgets/network_overlay.dart';
 import '../screens/wrapper/auth_wrapper.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 /// 🔥 CUSTOM SCROLL (WEB DRAG)
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
@@ -24,6 +25,7 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
 
   /// 🔥 MATIKAN DEBUG PAINT
   debugPaintSizeEnabled = false;
