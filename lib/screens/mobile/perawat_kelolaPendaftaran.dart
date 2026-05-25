@@ -15,7 +15,6 @@ class _PerawatKelolaPendaftaranScreenState
 
   DateTime? selectedDate;
 
-  /// 🔥 CONTROLLER BARU
   final TextEditingController tanggalController = TextEditingController();
 
   bool loading = false;
@@ -23,7 +22,8 @@ class _PerawatKelolaPendaftaranScreenState
 
   List<QueryDocumentSnapshot> daftarPasien = [];
 
-  Map<String, String> cacheNama = {};
+  /// CACHE STATUS PASIEN
+  Map<String, bool> cachePasienTerdaftar = {};
 
   @override
   void dispose() {
@@ -36,8 +36,11 @@ class _PerawatKelolaPendaftaranScreenState
     return text[0].toUpperCase() + text.substring(1);
   }
 
-  Future<String> getNamaDariNIK(String nik) async {
-    if (cacheNama.containsKey(nik)) return cacheNama[nik]!;
+  /// CEK PASIEN TERDAFTAR ATAU BARU
+  Future<bool> cekPasienTerdaftar(String nik) async {
+    if (cachePasienTerdaftar.containsKey(nik)) {
+      return cachePasienTerdaftar[nik]!;
+    }
 
     final snapshot =
         await firestore
@@ -46,18 +49,11 @@ class _PerawatKelolaPendaftaranScreenState
             .limit(1)
             .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      String nama =
-          (snapshot.docs.first.data()["nama"] ?? "").toString().trim();
+    bool terdaftar = snapshot.docs.isNotEmpty;
 
-      nama = capitalize(nama);
+    cachePasienTerdaftar[nik] = terdaftar;
 
-      cacheNama[nik] = nama;
-      return nama;
-    } else {
-      cacheNama[nik] = "(-) Pasien Baru";
-      return "(-) Pasien Baru";
-    }
+    return terdaftar;
   }
 
   Future<void> pilihTanggal() async {
@@ -71,8 +67,6 @@ class _PerawatKelolaPendaftaranScreenState
     if (picked != null) {
       setState(() {
         selectedDate = picked;
-
-        /// 🔥 SET KE TEXTFIELD
         tanggalController.text = formatTanggal(picked);
       });
     }
@@ -80,6 +74,10 @@ class _PerawatKelolaPendaftaranScreenState
 
   String formatTanggal(DateTime date) {
     return "${date.day}-${date.month}-${date.year}";
+  }
+
+  String formatJam(DateTime date) {
+    return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
   }
 
   Future<void> ambilData() async {
@@ -135,6 +133,35 @@ class _PerawatKelolaPendaftaranScreenState
     await ambilData();
   }
 
+  Future<void> konfirmasiStatus(String docId, String statusBaru) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Konfirmasi"),
+          content: Text(
+            'Apakah anda yakin ingin mengubah status menjadi "$statusBaru"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Ya", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      await updateStatus(docId, statusBaru);
+    }
+  }
+
   Color warnaStatus(String status) {
     switch (status.toLowerCase()) {
       case "diterima":
@@ -152,7 +179,13 @@ class _PerawatKelolaPendaftaranScreenState
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 90, child: Text(label)),
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
           const Text(": "),
           Expanded(child: Text(value)),
         ],
@@ -179,12 +212,11 @@ class _PerawatKelolaPendaftaranScreenState
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            /// 🔥 FIXED TEXTFIELD
             GestureDetector(
               onTap: pilihTanggal,
               child: AbsorbPointer(
                 child: TextField(
-                  controller: tanggalController, // 🔥 INI KUNCINYA
+                  controller: tanggalController,
                   decoration: InputDecoration(
                     labelText: "Tanggal",
                     hintText: "Pilih tanggal",
@@ -235,33 +267,49 @@ class _PerawatKelolaPendaftaranScreenState
                     itemCount: daftarPasien.length,
                     itemBuilder: (context, index) {
                       final doc = daftarPasien[index];
+
                       final data = doc.data() as Map<String, dynamic>;
 
                       String id = doc.id;
+
                       String nik = data["nik"] ?? "-";
+
+                      String nama = capitalize(data["patient_name"] ?? "-");
+
                       String keluhan = capitalize(data["keluhan"] ?? "-");
+
                       String layanan = capitalize(data["layanan"] ?? "-");
+
                       String status = capitalize(data["status"] ?? "Pending");
 
-                      String jam = "-";
+                      String jamDaftar = "-";
                       String tanggal = "-";
+                      String jamBerobat = "-";
 
                       if (data["created_at"] != null) {
                         DateTime dt =
                             (data["created_at"] as Timestamp).toDate();
-                        jam =
-                            "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+
+                        jamDaftar = formatJam(dt);
                       }
 
                       if (data["tanggal"] != null) {
                         DateTime dt = (data["tanggal"] as Timestamp).toDate();
-                        tanggal = "${dt.day}-${dt.month}-${dt.year}";
+
+                        tanggal = formatTanggal(dt);
+
+                        jamBerobat = formatJam(dt);
                       }
 
-                      return FutureBuilder<String>(
-                        future: getNamaDariNIK(nik),
+                      return FutureBuilder<bool>(
+                        future: cekPasienTerdaftar(nik),
                         builder: (context, snapshot) {
-                          String nama = snapshot.data ?? "...";
+                          bool pasienTerdaftar = snapshot.data ?? false;
+
+                          String statusPasien =
+                              pasienTerdaftar
+                                  ? "Pasien Terdaftar"
+                                  : "Pasien Baru";
 
                           return Card(
                             elevation: 3,
@@ -272,30 +320,57 @@ class _PerawatKelolaPendaftaranScreenState
                             child: ExpansionTile(
                               collapsedBackgroundColor: Colors.green.shade100,
                               backgroundColor: Colors.green.shade50,
-                              title: Text(
-                                nik,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+
+                              /// HEADER CARD
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    nama,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 4),
+
+                                  Text(
+                                    "Jam Daftar : $jamDaftar",
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ],
                               ),
-                              subtitle: Text("Jam daftar : $jam"),
+
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
                                     children: [
                                       itemDetail("Nama", nama),
+
                                       itemDetail("NIK", nik),
+
+                                      itemDetail("Pasien", statusPasien),
+
                                       itemDetail("Keluhan", keluhan),
+
                                       itemDetail("Layanan", layanan),
 
                                       Row(
                                         children: [
                                           const SizedBox(
-                                            width: 90,
-                                            child: Text("Status"),
+                                            width: 100,
+                                            child: Text(
+                                              "Status",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
                                           ),
+
                                           const Text(": "),
+
                                           Text(
                                             status,
                                             style: TextStyle(
@@ -308,6 +383,8 @@ class _PerawatKelolaPendaftaranScreenState
 
                                       itemDetail("Tanggal", tanggal),
 
+                                      itemDetail("Jam Berobat", jamBerobat),
+
                                       const SizedBox(height: 15),
 
                                       Row(
@@ -315,7 +392,7 @@ class _PerawatKelolaPendaftaranScreenState
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed:
-                                                  () => updateStatus(
+                                                  () => konfirmasiStatus(
                                                     id,
                                                     "Pending",
                                                   ),
@@ -331,11 +408,13 @@ class _PerawatKelolaPendaftaranScreenState
                                               ),
                                             ),
                                           ),
+
                                           const SizedBox(width: 5),
+
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed:
-                                                  () => updateStatus(
+                                                  () => konfirmasiStatus(
                                                     id,
                                                     "Ditolak",
                                                   ),
@@ -351,7 +430,9 @@ class _PerawatKelolaPendaftaranScreenState
                                               ),
                                             ),
                                           ),
+
                                           const SizedBox(width: 5),
+
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed:

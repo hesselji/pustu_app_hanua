@@ -70,6 +70,9 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   /// 🔥 CACHE PASIEN
   Map<String, Map<String, dynamic>> cachePasien = {};
 
+  /// 🔥 DETAIL POPUP
+  Map<String, List<Map<String, dynamic>>> detailKunjungan = {};
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,6 +92,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            /// FORM
             Row(
               children: [
                 Expanded(
@@ -104,7 +108,9 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
                     onChanged: (val) => setState(() => selectedBulan = val),
                   ),
                 ),
+
                 const SizedBox(width: 10),
+
                 Expanded(
                   child: DropdownButtonFormField<int>(
                     value: selectedTahun,
@@ -126,6 +132,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
             const SizedBox(height: 16),
 
+            /// BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -162,27 +169,80 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
               ),
 
             if (showResult) ...[
+              /// 🔴 TOTAL KUNJUNGAN
+              GestureDetector(
+                onTap: showDetailKunjungan,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.touch_app, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text(
+                                "Total Kunjungan",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          Text(
+                            "$totalKunjungan kunjungan",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Tekan untuk melihat detail pasien",
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              /// 🟢 TOTAL PASIEN
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.green.shade100,
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
                   children: [
-                    _rowBetween(
-                      "Total Kunjungan",
-                      "$totalKunjungan kunjungan",
-                      bold: true,
-                    ),
                     _rowBetween(
                       "Total Pasien",
                       "$totalPasien orang",
                       bold: true,
                     ),
+
                     const SizedBox(height: 10),
+
                     _barRow("Laki-laki", laki, totalPasien, Colors.blue),
+
                     _barRow("Perempuan", perempuan, totalPasien, Colors.pink),
                   ],
                 ),
@@ -190,25 +250,71 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
               const SizedBox(height: 20),
 
-              _sectionTitle("Rentang Umur"),
-              ...umurMap.entries.map((e) {
-                return _simpleRow(
-                  e.key,
-                  "${e.value} orang",
-                  Colors.orange.shade100,
-                );
-              }),
+              /// 🟡 RENTANG UMUR
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Rentang Umur",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    ...umurMap.entries.map((e) {
+                      return _simpleRow(
+                        e.key,
+                        "${e.value} orang",
+                        Colors.orange.shade50,
+                      );
+                    }),
+                  ],
+                ),
+              ),
 
               const SizedBox(height: 20),
 
-              _sectionTitle("Daftar Diagnosis"),
-              ...penyakitMap.entries.map((e) {
-                return _simpleRow(
-                  e.key,
-                  "${e.value} diagnosis",
-                  Colors.grey.shade200,
-                );
-              }),
+              /// 🔵 DIAGNOSIS
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Daftar Diagnosis",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    ...penyakitMap.entries.map((e) {
+                      return _simpleRow(
+                        e.key,
+                        "${e.value} diagnosis",
+                        Colors.blue.shade50,
+                      );
+                    }),
+                  ],
+                ),
+              ),
             ],
           ],
         ),
@@ -216,24 +322,14 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     );
   }
 
-  DateTime? parseTanggal(String text) {
-    try {
-      List<String> parts = text.split(" ");
-      int day = int.parse(parts[0]);
-      int month = bulanMap[parts[1]] ?? 0;
-      int year = int.parse(parts[2]);
+  /// =========================
+  /// FIREBASE
+  /// =========================
 
-      if (month == 0) return null;
-
-      return DateTime(year, month, day);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// 🔥 AMBIL DATA CEPAT
   Future<void> _submitLaporan() async {
-    if (selectedBulan == null || selectedTahun == null) return;
+    if (selectedBulan == null || selectedTahun == null) {
+      return;
+    }
 
     setState(() {
       submittedBulan = selectedBulan;
@@ -249,55 +345,101 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     perempuan = 0;
 
     umurMap.updateAll((key, value) => 0);
+
     penyakitMap.clear();
 
+    detailKunjungan.clear();
+
     Set<String> pasienUnik = {};
+
+    /// 🔥 AGAR GENDER TIDAK DOBEL
+    Set<String> pasienGenderTerhitung = {};
+
+    /// 🔥 AGAR UMUR TIDAK DOBEL
+    Set<String> pasienUmurTerhitung = {};
+
     int bulanAngka = bulanList.indexOf(submittedBulan!) + 1;
 
-    /// 🔥 1x QUERY SAJA
     final snapshot = await firestore.collectionGroup("medical_records").get();
 
     for (var doc in snapshot.docs) {
       final m = doc.data();
 
+      /// 🔥 SKIP JIKA DIHAPUS
+      bool isDeleted = m["is_deleted"] ?? false;
+
+      if (isDeleted == true) continue;
+
       if (m["tanggal"] == null) continue;
 
+      /// 🔥 PAKAI FIELD TANGGAL
       DateTime? dt = parseTanggal(m["tanggal"]);
+
       if (dt == null) continue;
 
       if (dt.month == bulanAngka && dt.year == submittedTahun) {
         totalKunjungan++;
 
         String pasienId = doc.reference.parent.parent!.id;
+
         pasienUnik.add(pasienId);
 
-        /// 🔥 CACHE PASIEN
+        /// CACHE PASIEN
         if (!cachePasien.containsKey(pasienId)) {
           final pDoc =
               await firestore.collection("patients").doc(pasienId).get();
+
           if (pDoc.exists) {
             cachePasien[pasienId] = pDoc.data()!;
           }
         }
 
         final p = cachePasien[pasienId];
+
         if (p != null) {
+          String nama = p["nama"] ?? "-";
+
           String jk = p["jk"] ?? "";
+
           String tgl = p["tgl"] ?? "";
 
-          if (jk.toLowerCase().contains("laki")) {
-            laki++;
-          } else {
-            perempuan++;
+          /// DETAIL POPUP
+          if (!detailKunjungan.containsKey(nama)) {
+            detailKunjungan[nama] = [];
           }
 
-          int umur = hitungUmur(tgl);
-          kategoriUmur(umur);
+          detailKunjungan[nama]!.add({
+            "tanggal": m["tanggal"] ?? "-",
+            "diagnosa": m["diagnosa"] ?? "-",
+          });
+
+          /// GENDER 1x
+          if (!pasienGenderTerhitung.contains(pasienId)) {
+            pasienGenderTerhitung.add(pasienId);
+
+            if (jk.toLowerCase().contains("laki")) {
+              laki++;
+            } else {
+              perempuan++;
+            }
+          }
+
+          /// UMUR 1x
+          if (!pasienUmurTerhitung.contains(pasienId)) {
+            pasienUmurTerhitung.add(pasienId);
+
+            int umur = hitungUmur(tgl);
+
+            kategoriUmur(umur);
+          }
         }
 
+        /// DIAGNOSIS TETAP SEMUA
         String diagnosa = (m["diagnosa"] ?? "").toString().trim();
+
         if (diagnosa.isNotEmpty) {
           diagnosa = normalisasiDiagnosa(diagnosa);
+
           penyakitMap[diagnosa] = (penyakitMap[diagnosa] ?? 0) + 1;
         }
       }
@@ -305,7 +447,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
     totalPasien = pasienUnik.length;
 
-    /// 🔥 SORT TERBANYAK
+    /// SORT
     penyakitMap = Map.fromEntries(
       penyakitMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
     );
@@ -317,8 +459,96 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     });
   }
 
+  /// =========================
+  /// POPUP DETAIL
+  /// =========================
+
+  void showDetailKunjungan() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Daftar Pasien Berobat"),
+
+          content: SizedBox(
+            width: double.maxFinite,
+
+            child: SingleChildScrollView(
+              child: Column(
+                children:
+                    detailKunjungan.entries.map((e) {
+                      return ExpansionTile(
+                        title: Text(
+                          e.key,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+
+                        children:
+                            e.value.map((item) {
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+
+                                padding: const EdgeInsets.all(10),
+
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                  children: [
+                                    Text("Tanggal : ${item["tanggal"]}"),
+
+                                    Text("Diagnosis : ${item["diagnosa"]}"),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                      );
+                    }).toList(),
+              ),
+            ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Tutup"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// =========================
+  /// UTIL
+  /// =========================
+
+  DateTime? parseTanggal(String text) {
+    try {
+      List<String> parts = text.split(" ");
+
+      int day = int.parse(parts[0]);
+
+      int month = bulanMap[parts[1]] ?? 0;
+
+      int year = int.parse(parts[2]);
+
+      if (month == 0) return null;
+
+      return DateTime(year, month, day);
+    } catch (e) {
+      return null;
+    }
+  }
+
   List<int> _tahunList() {
     int now = DateTime.now().year;
+
     return [2025, ...List.generate(now - 2025, (i) => 2026 + i)];
   }
 
@@ -348,8 +578,13 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
   String normalisasiDiagnosa(String text) {
     if (text.isEmpty) return text;
+
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
+
+  /// =========================
+  /// UI
+  /// =========================
 
   InputDecoration _inputStyle(String label) {
     return InputDecoration(
@@ -361,45 +596,48 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   }
 
   Widget _rowBetween(String l, String r, {bool bold = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(l, style: TextStyle(fontWeight: bold ? FontWeight.bold : null)),
-        Text(r, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+        children: [
+          Text(l, style: TextStyle(fontWeight: bold ? FontWeight.bold : null)),
+
+          Text(r, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 
   Widget _barRow(String l, int v, int t, Color c) {
     double p = t == 0 ? 0 : v / t;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+
       children: [
         _rowBetween(l, "$v orang"),
+
         LinearProgressIndicator(value: p, color: c),
+
         const SizedBox(height: 10),
       ],
-    );
-  }
-
-  Widget _sectionTitle(String t) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        t,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
     );
   }
 
   Widget _simpleRow(String l, String r, Color c) {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
+
       padding: const EdgeInsets.all(12),
+
       decoration: BoxDecoration(
         color: c,
         borderRadius: BorderRadius.circular(10),
       ),
+
       child: _rowBetween(l, r),
     );
   }
