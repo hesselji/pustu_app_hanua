@@ -78,6 +78,13 @@ class _MedicalPatientListScreenState
                   return nama.contains(searchText);
                 }).toList();
 
+                /// 🔥 SORT A-Z (FIX UTAMA)
+                filtered.sort((a, b) {
+                  final namaA = (a['nama'] ?? "").toString().toLowerCase();
+                  final namaB = (b['nama'] ?? "").toString().toLowerCase();
+                  return namaA.compareTo(namaB);
+                });
+
                 if (filtered.isEmpty) {
                   return const Center(child: Text("Pasien tidak ditemukan"));
                 }

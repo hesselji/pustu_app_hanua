@@ -14,7 +14,6 @@ class PatientListScreen extends StatefulWidget {
 class _PatientListScreenState extends State<PatientListScreen> {
   String searchText = "";
 
-  /// 🔥 DELETE SUPER AMAN
   void showDeleteDialog(String id) {
     final confirmController = TextEditingController();
 
@@ -68,7 +67,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
 
-      /// 🔥 APP BAR MODERN
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -79,7 +77,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
 
-      /// ➕ FLOATING BUTTON
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green,
         onPressed: () {
@@ -95,7 +92,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
         children: [
           const SizedBox(height: 10),
 
-          /// 🔍 SEARCH BAR (ESTETIK)
+          /// 🔍 SEARCH
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
@@ -124,7 +121,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
           const SizedBox(height: 10),
 
-          /// 📋 LIST PASIEN
+          /// 📋 LIST
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -137,10 +134,18 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
                 final data = snapshot.data!.docs;
 
+                /// 🔍 FILTER
                 final filtered = data.where((doc) {
                   final nama = doc['nama'].toString().toLowerCase();
                   return nama.contains(searchText);
                 }).toList();
+
+                /// 🔥 SORT A-Z (INI KUNCI FIX)
+                filtered.sort((a, b) {
+                  final namaA = (a['nama'] ?? "").toString().toLowerCase();
+                  final namaB = (b['nama'] ?? "").toString().toLowerCase();
+                  return namaA.compareTo(namaB);
+                });
 
                 if (filtered.isEmpty) {
                   return const Center(child: Text("Tidak ada data"));
@@ -162,7 +167,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
                           ),
                         );
                       },
-
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.all(14),
@@ -177,10 +181,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                             ),
                           ],
                         ),
-
                         child: Row(
                           children: [
-                            /// 👤 AVATAR ICON
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -192,10 +194,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                 color: Colors.green,
                               ),
                             ),
-
                             const SizedBox(width: 12),
 
-                            /// 🔹 TEXT
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,10 +218,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                               ),
                             ),
 
-                            /// 🔥 ACTION BUTTON
                             Row(
                               children: [
-                                /// EDIT
                                 IconButton(
                                   icon: const Icon(Icons.edit,
                                       color: Colors.blue),
@@ -237,8 +235,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
                                     );
                                   },
                                 ),
-
-                                /// DELETE
                                 IconButton(
                                   icon: const Icon(Icons.delete,
                                       color: Colors.red),
