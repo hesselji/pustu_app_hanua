@@ -13,7 +13,7 @@ class WebHomeScreen extends StatelessWidget {
         child: Column(
           children: [
 
-            /// 🔥 NAVBAR
+            ///NAVBAR
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
               color: Colors.white,
@@ -40,7 +40,7 @@ class WebHomeScreen extends StatelessWidget {
 
                   const SizedBox(width: 20),
 
-                  /// 🔥 BUTTON LOGIN (FIXED)
+                  ///BUTTON LOGIN 
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -64,7 +64,7 @@ class WebHomeScreen extends StatelessWidget {
               ),
             ),
 
-            /// 🔥 HERO
+            ///HERO
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 80),
               child: SizedBox(
@@ -101,7 +101,7 @@ class WebHomeScreen extends StatelessWidget {
                           Row(
                             children: [
 
-                              /// 🔥 BUTTON UTAMA (FIXED)
+                              ///BUTTON UTAMA 
                               ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
@@ -160,7 +160,7 @@ class WebHomeScreen extends StatelessWidget {
               ),
             ),
 
-            /// 🔥 FEATURES
+            /// FEATURES
             Padding(
               padding: const EdgeInsets.symmetric(
                   horizontal: 80, vertical: 40),
@@ -201,8 +201,7 @@ class WebHomeScreen extends StatelessWidget {
   }
 }
 
-////////////////////////////////////////////////////////////
-/// 🔥 FEATURE CARD
+///FEATURE CARD
 class FeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
