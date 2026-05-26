@@ -15,10 +15,12 @@ class WebPerawatDashboard extends StatefulWidget {
 
 class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
   int selectedMenu = 0;
+  final ScrollController _verticalController = ScrollController();
+
   bool hasUnreadNotification = true;
   List<String> clearedNotifications = [];
   bool firstLoadNotification = true;
-
+  bool isExpandedPendaftaran = false;
   DateTime? selectedDate = DateTime.now();
   @override
   void initState() {
@@ -516,7 +518,12 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: _buildContent(),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1600),
+                        child: _buildContent(),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -549,6 +556,7 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
     final selectedString = formatDate(selected);
 
     String greeting;
+
     if (now.hour < 12) {
       greeting = "Selamat pagi ☀️";
     } else if (now.hour < 18) {
@@ -560,72 +568,111 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          greeting,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+        /// MODE NORMAL
+        if (!isExpandedPendaftaran) ...[
+          Text(
+            greeting,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
 
-        const SizedBox(height: 5),
+          const SizedBox(height: 5),
 
-        const Text(
-          "Kelola pendaftaran pasien dengan cepat dan tepat",
-          style: TextStyle(color: Colors.grey),
-        ),
+          const Text(
+            "Kelola pendaftaran pasien dengan cepat dan tepat",
+            style: TextStyle(color: Colors.grey),
+          ),
 
-        const SizedBox(height: 25),
+          const SizedBox(height: 25),
 
-        /// STAT
-        Row(
-          children: [
-            _statCard("Total Pasien", Icons.people, "patients"),
-            _rekamMedisCard(),
-            _todayPatientCard(),
-          ],
-        ),
+          /// STAT CARD
+          Row(
+            children: [
+              _statCard("Total Pasien", Icons.people, "patients"),
 
-        const SizedBox(height: 20),
+              _rekamMedisCard(),
 
-        /// 🔥 INFORMASI PELAYANAN (TANPA KONFIRMASI)
-        _serviceStatusCard(),
+              _todayPatientCard(),
+            ],
+          ),
 
-        const SizedBox(height: 25),
+          const SizedBox(height: 20),
 
-        /// PENDAFTARAN
+          /// SERVICE STATUS
+          _serviceStatusCard(),
+
+          const SizedBox(height: 25),
+        ],
+
+        /// PANEL PENDAFTARAN
         Expanded(
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+
             padding: const EdgeInsets.all(20),
+
             decoration: BoxDecoration(
               color: Colors.white,
+
               borderRadius: BorderRadius.circular(18),
+
               boxShadow: const [
                 BoxShadow(color: Colors.black12, blurRadius: 10),
               ],
             ),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
+                /// HEADER
                 Row(
                   children: [
                     const Text(
                       "Pendaftaran Pasien",
+
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 18,
                       ),
                     ),
+
                     const Spacer(),
 
+                    /// EXPAND BUTTON
+                    IconButton(
+                      tooltip: isExpandedPendaftaran ? "Kecilkan" : "Perbesar",
+
+                      icon: Icon(
+                        isExpandedPendaftaran
+                            ? Icons.keyboard_arrow_down
+                            : Icons.open_in_full,
+                      ),
+
+                      onPressed: () {
+                        setState(() {
+                          isExpandedPendaftaran = !isExpandedPendaftaran;
+                        });
+                      },
+                    ),
+
+                    /// FILTER TANGGAL
                     ElevatedButton.icon(
                       onPressed: pickDate,
+
                       icon: const Icon(Icons.date_range),
+
                       label: Text(selectedString),
                     ),
 
                     if (selectedDate != null)
                       IconButton(
                         icon: const Icon(Icons.close),
+
                         onPressed: () {
-                          setState(() => selectedDate = null);
+                          setState(() {
+                            selectedDate = null;
+                          });
                         },
                       ),
                   ],
@@ -633,6 +680,7 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
 
                 const SizedBox(height: 20),
 
+                /// LIST DATA
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream:
@@ -640,6 +688,7 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
                             .collection("registrations")
                             .orderBy("created_at", descending: true)
                             .snapshots(),
+
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
@@ -649,10 +698,15 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
 
                       final filtered =
                           docs.where((doc) {
-                            if (selectedDate == null) return true;
+                            if (selectedDate == null) {
+                              return true;
+                            }
 
                             final data = doc.data() as Map<String, dynamic>;
-                            if (data['tanggal'] == null) return false;
+
+                            if (data['tanggal'] == null) {
+                              return false;
+                            }
 
                             DateTime tgl =
                                 (data['tanggal'] as Timestamp).toDate();
@@ -668,148 +722,202 @@ class _WebPerawatDashboardState extends State<WebPerawatDashboard> {
                         );
                       }
 
-                      return ListView.builder(
-                        itemCount: filtered.length,
-                        itemBuilder: (context, i) {
-                          final doc = filtered[i];
-                          final d = doc.data() as Map<String, dynamic>;
+                      return Scrollbar(
+                        controller: _verticalController,
+                        thumbVisibility: true,
+                        interactive: true,
 
-                          final status = (d['status'] ?? "Pending").toString();
+                        child: ListView.builder(
+                          controller: _verticalController,
 
-                          Color statusColor;
-                          switch (status.toLowerCase()) {
-                            case "diterima":
-                              statusColor = Colors.green;
-                              break;
-                            case "ditolak":
-                              statusColor = Colors.red;
-                              break;
-                            default:
-                              statusColor = Colors.orange;
-                          }
+                          itemCount: filtered.length,
 
-                          DateTime jam =
-                              (d['created_at'] as Timestamp).toDate();
+                          itemBuilder: (context, i) {
+                            final doc = filtered[i];
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 14),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: Colors.white,
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black12, blurRadius: 6),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                /// HEADER
-                                Row(
-                                  children: [
-                                    const CircleAvatar(
-                                      backgroundColor: Colors.green,
-                                      child: Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
+                            final d = doc.data() as Map<String, dynamic>;
 
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            d['patient_name'] ?? "-",
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Text("NIK: ${d['nik']}"),
-                                        ],
-                                      ),
-                                    ),
+                            final status =
+                                (d['status'] ?? "Pending").toString();
 
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: statusColor.withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        status,
-                                        style: TextStyle(
-                                          color: statusColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            Color statusColor;
 
-                                const SizedBox(height: 10),
+                            switch (status.toLowerCase()) {
+                              case "diterima":
+                                statusColor = Colors.green;
+                                break;
 
-                                Text("Keluhan: ${d['keluhan']}"),
-                                Text("Layanan: ${d['layanan']}"),
+                              case "ditolak":
+                                statusColor = Colors.red;
+                                break;
 
-                                const SizedBox(height: 6),
+                              default:
+                                statusColor = Colors.orange;
+                            }
 
-                                Text(
-                                  "Tanggal: ${formatTanggalIndo((d['tanggal'] as Timestamp).toDate())}",
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
+                            DateTime jam =
+                                (d['created_at'] as Timestamp).toDate();
 
-                                Text(
-                                  "Jam: ${jam.hour}:${jam.minute.toString().padLeft(2, '0')}",
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 14),
 
-                                const SizedBox(height: 12),
+                              padding: const EdgeInsets.all(18),
 
-                                if (status.toLowerCase() == "pending") ...[
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+
+                                borderRadius: BorderRadius.circular(18),
+
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  /// HEADER CARD
                                   Row(
                                     children: [
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.green,
-                                          ),
-                                          onPressed: () {
-                                            confirmUpdate(
-                                              docId: doc.id,
-                                              statusBaru: "Diterima",
-                                            );
-                                          },
-                                          child: const Text("Terima"),
+                                      const CircleAvatar(
+                                        backgroundColor: Colors.green,
+
+                                        child: Icon(
+                                          Icons.person,
+                                          color: Colors.white,
                                         ),
                                       ),
-                                      const SizedBox(width: 10),
+
+                                      const SizedBox(width: 12),
+
                                       Expanded(
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+
+                                          children: [
+                                            Text(
+                                              d['patient_name'] ?? "-",
+
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+
+                                                fontSize: 16,
+                                              ),
+                                            ),
+
+                                            const SizedBox(height: 4),
+
+                                            Text("NIK: ${d['nik']}"),
+                                          ],
+                                        ),
+                                      ),
+
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+
+                                          vertical: 6,
+                                        ),
+
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withOpacity(0.15),
+
+                                          borderRadius: BorderRadius.circular(
+                                            20,
                                           ),
-                                          onPressed: () {
-                                            confirmUpdate(
-                                              docId: doc.id,
-                                              statusBaru: "Ditolak",
-                                            );
-                                          },
-                                          child: const Text("Tolak"),
+                                        ),
+
+                                        child: Text(
+                                          status,
+
+                                          style: TextStyle(
+                                            color: statusColor,
+
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
+
+                                  const SizedBox(height: 14),
+
+                                  Text("Keluhan: ${d['keluhan']}"),
+
+                                  const SizedBox(height: 6),
+
+                                  Text("Layanan: ${d['layanan']}"),
+
+                                  const SizedBox(height: 8),
+
+                                  Text(
+                                    "Tanggal: ${formatTanggalIndo((d['tanggal'] as Timestamp).toDate())}",
+
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
+
+                                  Text(
+                                    "Jam: ${jam.hour}:${jam.minute.toString().padLeft(2, '0')}",
+
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
+
+                                  const SizedBox(height: 14),
+
+                                  /// BUTTON
+                                  if (status.toLowerCase() == "pending") ...[
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.green,
+                                            ),
+
+                                            onPressed: () {
+                                              confirmUpdate(
+                                                docId: doc.id,
+
+                                                statusBaru: "Diterima",
+                                              );
+                                            },
+
+                                            child: const Text("Terima"),
+                                          ),
+                                        ),
+
+                                        const SizedBox(width: 10),
+
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                            ),
+
+                                            onPressed: () {
+                                              confirmUpdate(
+                                                docId: doc.id,
+
+                                                statusBaru: "Ditolak",
+                                              );
+                                            },
+
+                                            child: const Text("Tolak"),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          );
-                        },
+                              ),
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
