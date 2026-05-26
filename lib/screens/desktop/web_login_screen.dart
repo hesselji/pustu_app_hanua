@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'web_perawat_dashboard.dart';
 
 class WebLoginScreen extends StatefulWidget {
@@ -30,12 +29,16 @@ class _WebLoginScreenState extends State<WebLoginScreen>
   void initState() {
     super.initState();
 
-    _animController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
 
     _fade = Tween<double>(begin: 0, end: 1).animate(_animController);
-    _slide = Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero)
-        .animate(_animController);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(_animController);
 
     _animController.forward();
 
@@ -46,9 +49,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
       if (user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const WebPerawatDashboard(),
-          ),
+          MaterialPageRoute(builder: (_) => const WebPerawatDashboard()),
         );
       }
     });
@@ -60,11 +61,12 @@ class _WebLoginScreenState extends State<WebLoginScreen>
     setState(() => isLoading = true);
 
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('users')
-          .where('username', isEqualTo: usernameController.text.trim())
-          .limit(1)
-          .get();
+      final query =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('username', isEqualTo: usernameController.text.trim())
+              .limit(1)
+              .get();
 
       if (query.docs.isEmpty) {
         throw FirebaseAuthException(code: 'user-not-found');
@@ -79,9 +81,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (_) => const WebPerawatDashboard(),
-        ),
+        MaterialPageRoute(builder: (_) => const WebPerawatDashboard()),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
@@ -110,11 +110,12 @@ class _WebLoginScreenState extends State<WebLoginScreen>
     }
 
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('users')
-          .where('username', isEqualTo: username)
-          .limit(1)
-          .get();
+      final query =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .limit(1)
+              .get();
 
       if (query.docs.isEmpty) throw Exception();
 
@@ -129,15 +130,15 @@ class _WebLoginScreenState extends State<WebLoginScreen>
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.blue),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.blue));
   }
 
   @override
@@ -145,22 +146,18 @@ class _WebLoginScreenState extends State<WebLoginScreen>
     return Scaffold(
       body: Stack(
         children: [
-
-          /// 🔥 BACKGROUND SOFT BLUE
+          ///BACKGROUND SOFT BLUE
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFFEEF3F8),
-                  Color(0xFFDCE6F1),
-                ],
+                colors: [Color(0xFFEEF3F8), Color(0xFFDCE6F1)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
           ),
 
-          /// 🔥 GLASS CARD
+          ///GLASS CARD
           Center(
             child: FadeTransition(
               opacity: _fade,
@@ -178,12 +175,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                         borderRadius: BorderRadius.circular(25),
                         border: Border.all(color: Colors.white70),
                       ),
-                      child: Row(
-                        children: [
-                          _left(),
-                          _right(),
-                        ],
-                      ),
+                      child: Row(children: [_left(), _right()]),
                     ),
                   ),
                 ),
@@ -195,7 +187,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
     );
   }
 
-  /// 🔹 LEFT
+  ///LEFT
   Widget _left() {
     return Expanded(
       child: Padding(
@@ -204,7 +196,6 @@ class _WebLoginScreenState extends State<WebLoginScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Image.asset("assets/logo_pustu.png", height: 60),
 
             const SizedBox(height: 30),
@@ -237,14 +228,14 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                 "Kelola pasien, rekam medis, dan pelayanan dengan cepat, aman, dan profesional.",
                 style: TextStyle(color: Colors.black87),
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// 🔹 RIGHT
+  ///RIGHT
   Widget _right() {
     return Expanded(
       child: Padding(
@@ -254,7 +245,6 @@ class _WebLoginScreenState extends State<WebLoginScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
               const Text(
                 "Login Perawat",
                 style: TextStyle(
@@ -270,8 +260,12 @@ class _WebLoginScreenState extends State<WebLoginScreen>
 
               const SizedBox(height: 20),
 
-              _input(passwordController, "Password", Icons.lock,
-                  isPassword: true),
+              _input(
+                passwordController,
+                "Password",
+                Icons.lock,
+                isPassword: true,
+              ),
 
               Align(
                 alignment: Alignment.centerRight,
@@ -297,12 +291,13 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          "LOGIN",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                  child:
+                      isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                            "LOGIN",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                 ),
               ),
             ],
@@ -312,23 +307,27 @@ class _WebLoginScreenState extends State<WebLoginScreen>
     );
   }
 
-  /// 🔥 INPUT STYLE CLEAN
-  Widget _input(TextEditingController c, String label, IconData icon,
-      {bool isPassword = false}) {
+  Widget _input(
+    TextEditingController c,
+    String label,
+    IconData icon, {
+    bool isPassword = false,
+  }) {
     return TextFormField(
       controller: c,
       obscureText: isPassword ? isObscure : false,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                    isObscure ? Icons.visibility_off : Icons.visibility),
-                onPressed: () =>
-                    setState(() => isObscure = !isObscure),
-              )
-            : null,
+        suffixIcon:
+            isPassword
+                ? IconButton(
+                  icon: Icon(
+                    isObscure ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () => setState(() => isObscure = !isObscure),
+                )
+                : null,
         filled: true,
         fillColor: Colors.grey.shade100,
         border: OutlineInputBorder(
@@ -336,8 +335,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
           borderSide: BorderSide.none,
         ),
       ),
-      validator: (v) =>
-          v!.isEmpty ? "$label tidak boleh kosong" : null,
+      validator: (v) => v!.isEmpty ? "$label tidak boleh kosong" : null,
     );
   }
 }
