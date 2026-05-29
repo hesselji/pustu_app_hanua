@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'patient_register_screen.dart';
+import 'patient_cekberobat_screen.dart';
+import 'about_us.dart';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});
@@ -9,7 +12,6 @@ class PatientHomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-
             /// 🔹 HEADER
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
@@ -45,10 +47,7 @@ class PatientHomeScreen extends StatelessWidget {
             /// 🔹 TITLE
             const Text(
               "BERANDA PASIEN",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 20),
@@ -59,13 +58,17 @@ class PatientHomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ListView(
                   children: [
-
                     _menuCard(
                       title: "Daftar Berobat",
                       icon: Icons.medical_services,
                       color: Colors.green,
                       onTap: () {
-                        // TODO: ke halaman pendaftaran
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (_) => const PatientRegisterScreen(),
+                          ),
+                        );
                       },
                     ),
 
@@ -76,7 +79,12 @@ class PatientHomeScreen extends StatelessWidget {
                       icon: Icons.list_alt,
                       color: Colors.blue,
                       onTap: () {
-                        // TODO: ke halaman list
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PatientCheckScreen(),
+                          ),
+                        );
                       },
                     ),
 
@@ -87,7 +95,12 @@ class PatientHomeScreen extends StatelessWidget {
                       icon: Icons.info,
                       color: Colors.orange,
                       onTap: () {
-                        // TODO: ke halaman about
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AboutUsPage(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -152,7 +165,6 @@ class PatientHomeScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-
             /// ICON
             Container(
               width: 80,
@@ -183,7 +195,7 @@ class PatientHomeScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.only(right: 15),
               child: Icon(Icons.arrow_forward_ios, size: 16),
-            )
+            ),
           ],
         ),
       ),
