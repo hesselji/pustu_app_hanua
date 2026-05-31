@@ -352,7 +352,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
     Set<String> pasienUnik = {};
 
-    /// 🔥 HITUNG PASIEN HANYA SEKALI
+    
     Set<String> pasienSudahDihitung = {};
 
     int bulanAngka = bulanList.indexOf(submittedBulan!) + 1;
@@ -362,14 +362,14 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     for (var doc in snapshot.docs) {
       final m = doc.data();
 
-      /// 🔥 SKIP JIKA DIHAPUS
+     
       bool isDeleted = m["is_deleted"] ?? false;
 
       if (isDeleted == true) continue;
 
       if (m["tanggal"] == null) continue;
 
-      /// 🔥 PAKAI FIELD TANGGAL
+     
       DateTime? dt = parseTanggal(m["tanggal"]);
 
       if (dt == null) continue;
@@ -381,7 +381,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
         pasienUnik.add(pasienId);
 
-        /// CACHE PASIEN
+       
         if (!cachePasien.containsKey(pasienId)) {
           final pDoc =
               await firestore.collection("patients").doc(pasienId).get();
@@ -410,7 +410,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
             "diagnosa": m["diagnosa"] ?? "-",
           });
 
-          /// 🔥 HITUNG HANYA SEKALI PER PASIEN
+          
           if (!pasienSudahDihitung.contains(pasienId)) {
             pasienSudahDihitung.add(pasienId);
 
