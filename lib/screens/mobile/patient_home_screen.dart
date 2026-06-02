@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/patient_auth_helper.dart';
+import '../../services/fcm_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'home_screen.dart';
@@ -25,10 +26,21 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   late Future<DocumentSnapshot<Map<String, dynamic>>?> _patientFuture;
 
   @override
-  void initState() {
-    super.initState();
-    _patientFuture = _getPatientData();
-  }
+void initState() {
+  super.initState();
+  _patientFuture = _getPatientData();
+  _setupPatientNotification();
+}
+
+Future<void> _setupPatientNotification() async {
+  final patientUid = await PatientAuthHelper.getCurrentPatientUid();
+
+  if (patientUid == null) return;
+
+  await FcmService.subscribePatientTopicAndSaveToken(
+    patientUid: patientUid,
+  );
+}
 
 Future<DocumentSnapshot<Map<String, dynamic>>?> _getPatientData() async {
   final patientUid = await PatientAuthHelper.getCurrentPatientUid();
@@ -44,6 +56,7 @@ Future<DocumentSnapshot<Map<String, dynamic>>?> _getPatientData() async {
 Future<void> _logout() async {
   FocusManager.instance.primaryFocus?.unfocus();
 
+  await FcmService.unsubscribePatientTopic();
   await PatientAuthHelper.clearPatientSession();
 
   if (!mounted) return;

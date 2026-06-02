@@ -11,6 +11,7 @@ import 'screens/desktop/web_home_screen.dart';
 import 'screens/desktop/web_perawat_dashboard.dart'; // 🔥 TAMBAH
 import 'widgets/network_overlay.dart';
 import '../screens/wrapper/auth_wrapper.dart';
+import 'services/fcm_service.dart';
 
 /// 🔥 CUSTOM SCROLL (WEB DRAG)
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
@@ -39,6 +40,8 @@ void main() async {
   } else {
     await Firebase.initializeApp();
   }
+
+  await FcmService.initialize();
 
   runApp(
     ChangeNotifierProvider(
