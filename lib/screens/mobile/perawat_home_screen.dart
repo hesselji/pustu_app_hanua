@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../../services/fcm_service.dart';
 import 'home_screen.dart';
 import 'patient_list_screen.dart';
 import 'perawat_manageinfo_pelayanan.dart';
@@ -98,15 +98,29 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
       if (!mounted) return;
 
       if (query.docs.isNotEmpty) {
+        final currentEmail = user.email ?? "-";
+
+        await FcmService.subscribePerawatTopicAndSaveToken(
+          uid: user.uid,
+          email: currentEmail,
+        );
+
         setState(() {
           username = query.docs.first['username'] ?? "Perawat";
-          email = user.email ?? "-";
+          email = currentEmail;
           isLoading = false;
         });
       } else {
+        final currentEmail = user.email ?? "-";
+
+        await FcmService.subscribePerawatTopicAndSaveToken(
+          uid: user.uid,
+          email: currentEmail,
+        );
+
         setState(() {
           username = "Perawat";
-          email = user.email ?? "-";
+          email = currentEmail;
           isLoading = false;
         });
       }
@@ -147,17 +161,18 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
     return isEmailVisible ? value : _maskEmail(value);
   }
 
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
+ Future<void> _logout() async {
+  await FcmService.unsubscribePerawatTopic();
+  await FirebaseAuth.instance.signOut();
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (route) => false,
-    );
-  }
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => const HomeScreen()),
+    (route) => false,
+  );
+}
 
   Future<void> _confirmLogout() async {
     final bool? confirm = await showDialog<bool>(

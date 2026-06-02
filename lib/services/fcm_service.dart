@@ -136,4 +136,39 @@ class FcmService {
 
     await _messaging.unsubscribeFromTopic('pasien');
   }
+
+  static Future<void> subscribePerawatTopicAndSaveToken({
+    required String uid,
+    required String email,
+  }) async {
+    if (kIsWeb) return;
+
+    await _messaging.subscribeToTopic('perawat');
+
+    final token = await _messaging.getToken();
+
+    debugPrint('FCM TOKEN PERAWAT: $token');
+
+    if (token == null) return;
+
+    final query = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      await query.docs.first.reference.set({
+        'fcm_token': token,
+        'fcm_topic': 'perawat',
+        'fcm_updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+  }
+
+  static Future<void> unsubscribePerawatTopic() async {
+    if (kIsWeb) return;
+
+    await _messaging.unsubscribeFromTopic('perawat');
+  }
 }

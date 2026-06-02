@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../../services/notification_api_service.dart';
 import '../../services/patient_auth_helper.dart';
 
 class PatientRegisterScreen extends StatefulWidget {
   const PatientRegisterScreen({super.key});
 
   @override
-  State<PatientRegisterScreen> createState() =>
-      _PatientRegisterScreenState();
+  State<PatientRegisterScreen> createState() => _PatientRegisterScreenState();
 }
 
 class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
@@ -61,10 +60,11 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
         return;
       }
 
-      final doc = await FirebaseFirestore.instance
-          .collection('patient_users')
-          .doc(uid)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('patient_users')
+              .doc(uid)
+              .get();
 
       if (!doc.exists) {
         if (!mounted) return;
@@ -130,11 +130,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: today,
-      firstDate: DateTime(
-        today.year,
-        today.month,
-        today.day,
-      ),
+      firstDate: DateTime(today.year, today.month, today.day),
       lastDate: DateTime(2030),
     );
 
@@ -184,21 +180,50 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
         selectedTime!.minute,
       );
 
-      await FirebaseFirestore.instance.collection('registrations').add({
-        'patient_uid': patientUid,
-        'patient_name': patientName,
-        'nik': patientNik,
-        'phone': patientPhone,
-        'keluhan': keluhanController.text.trim(),
-        'tanggal': Timestamp.fromDate(finalDateTime),
-        'layanan': selectedLayanan,
-        'status': "Pending",
-        'is_cleared': false,
-        'created_at': Timestamp.now(),
-      });
+      /// 1. Simpan pendaftaran ke Firestore
+      final registrationRef = await FirebaseFirestore.instance
+          .collection('registrations')
+          .add({
+            'patient_uid': patientUid,
+            'patient_name': patientName,
+            'nik': patientNik,
+            'phone': patientPhone,
+            'keluhan': keluhanController.text.trim(),
+            'tanggal': Timestamp.fromDate(finalDateTime),
+            'layanan': selectedLayanan,
+            'status': "Pending",
+            'is_cleared': false,
+            'created_at': Timestamp.now(),
+          });
+
+      /// 2. Kirim notifikasi ke perawat
+      /// Letaknya DI SINI, setelah data berhasil masuk Firestore
+      try {
+        final tanggalText =
+            "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year} "
+            "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}";
+
+        await NotificationApiService.sendToPerawatTopicFromPatient(
+          title: "Pendaftaran Berobat Baru",
+          body:
+              "$patientName mendaftar layanan $selectedLayanan pada $tanggalText.",
+          data: {
+            'type': 'new_registration',
+            'registration_id': registrationRef.id,
+            'patient_uid': patientUid,
+            'patient_name': patientName,
+            'nik': patientNik,
+            'layanan': selectedLayanan,
+            'tanggal': tanggalText,
+          },
+        );
+      } catch (notificationError) {
+        debugPrint("Notifikasi ke perawat gagal: $notificationError");
+      }
 
       if (!mounted) return;
 
+      /// 3. Tampilkan pesan berhasil ke pasien
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Berhasil mendaftar!"),
@@ -211,10 +236,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal: $e"),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text("Gagal: $e"), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) {
@@ -248,163 +270,165 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
               _header(),
 
               Expanded(
-                child: isLoadingPatient
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.green,
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _serviceStatusCard(),
+                child:
+                    isLoadingPatient
+                        ? const Center(
+                          child: CircularProgressIndicator(color: Colors.green),
+                        )
+                        : SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _serviceStatusCard(),
 
-                            const SizedBox(height: 20),
+                              const SizedBox(height: 20),
 
-                            _sectionTitle("Data Pasien"),
+                              _sectionTitle("Data Pasien"),
 
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                            _patientInfoCard(),
+                              _patientInfoCard(),
 
-                            const SizedBox(height: 20),
+                              const SizedBox(height: 20),
 
-                            _sectionTitle("Keluhan"),
+                              _sectionTitle("Keluhan"),
 
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                            _inputField(
-                              title: "Keluhan Pasien",
-                              hint: "Tuliskan keluhan pasien",
-                              controller: keluhanController,
-                              icon: Icons.medical_information_outlined,
-                              maxLines: 4,
-                            ),
+                              _inputField(
+                                title: "Keluhan Pasien",
+                                hint: "Tuliskan keluhan pasien",
+                                controller: keluhanController,
+                                icon: Icons.medical_information_outlined,
+                                maxLines: 4,
+                              ),
 
-                            const SizedBox(height: 20),
+                              const SizedBox(height: 20),
 
-                            _sectionTitle("Jadwal Berobat"),
+                              _sectionTitle("Jadwal Berobat"),
 
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _pickerCard(
-                                    title: "Tanggal",
-                                    value: selectedDate == null
-                                        ? "Pilih tanggal"
-                                        : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-                                    icon: Icons.calendar_month,
-                                    onTap: pilihTanggal,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _pickerCard(
+                                      title: "Tanggal",
+                                      value:
+                                          selectedDate == null
+                                              ? "Pilih tanggal"
+                                              : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                                      icon: Icons.calendar_month,
+                                      onTap: pilihTanggal,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _pickerCard(
-                                    title: "Jam",
-                                    value: selectedTime == null
-                                        ? "Pilih jam"
-                                        : "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}",
-                                    icon: Icons.access_time,
-                                    onTap: pilihJam,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _pickerCard(
+                                      title: "Jam",
+                                      value:
+                                          selectedTime == null
+                                              ? "Pilih jam"
+                                              : "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}",
+                                      icon: Icons.access_time,
+                                      onTap: pilihJam,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
 
-                            const SizedBox(height: 20),
+                              const SizedBox(height: 20),
 
-                            _sectionTitle("Jenis Layanan"),
+                              _sectionTitle("Jenis Layanan"),
 
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _layananButton(
-                                    "Home Care",
-                                    Icons.home_outlined,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _layananButton(
+                                      "Home Care",
+                                      Icons.home_outlined,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _layananButton(
-                                    "Pustu Visit",
-                                    Icons.local_hospital_outlined,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _layananButton(
+                                      "Pustu Visit",
+                                      Icons.local_hospital_outlined,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
 
-                            const SizedBox(height: 30),
+                              const SizedBox(height: 30),
 
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: isSubmitting ? null : kirimData,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  disabledBackgroundColor:
-                                      Colors.green.withOpacity(0.5),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: isSubmitting ? null : kirimData,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    disabledBackgroundColor: Colors.green
+                                        .withOpacity(0.5),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                ),
-                                icon: isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.send,
-                                        color: Colors.white,
-                                      ),
-                                label: Text(
-                                  isSubmitting
-                                      ? "MENGIRIM..."
-                                      : "KIRIM PENDAFTARAN",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                  icon:
+                                      isSubmitting
+                                          ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                          : const Icon(
+                                            Icons.send,
+                                            color: Colors.white,
+                                          ),
+                                  label: Text(
+                                    isSubmitting
+                                        ? "MENGIRIM..."
+                                        : "KIRIM PENDAFTARAN",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
 
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: isSubmitting ? null : resetForm,
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 15,
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: isSubmitting ? null : resetForm,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text("BERSIHKAN FORM"),
                                 ),
-                                icon: const Icon(Icons.refresh),
-                                label: const Text("BERSIHKAN FORM"),
                               ),
-                            ),
 
-                            const SizedBox(height: 30),
-                          ],
+                              const SizedBox(height: 30),
+                            ],
+                          ),
                         ),
-                      ),
               ),
             ],
           ),
@@ -419,10 +443,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.green.shade700,
-            Colors.green.shade500,
-          ],
+          colors: [Colors.green.shade700, Colors.green.shade500],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -447,10 +468,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white),
             ),
           ),
 
@@ -462,11 +480,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Image.asset(
-              "assets/logo_pustu.png",
-              width: 40,
-              height: 40,
-            ),
+            child: Image.asset("assets/logo_pustu.png", width: 40, height: 40),
           ),
 
           const SizedBox(width: 15),
@@ -488,10 +502,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
                 SizedBox(height: 4),
                 Text(
                   "Pustu Hanua",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
@@ -503,10 +514,11 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
 
   Widget _serviceStatusCard() {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('service_status')
-          .doc('status')
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collection('service_status')
+              .doc('status')
+              .snapshots(),
       builder: (context, snapshot) {
         bool isAvailable = true;
 
@@ -521,10 +533,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-              ),
+              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
             ],
           ),
           child: Row(
@@ -533,9 +542,10 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: isAvailable
-                      ? Colors.green.withOpacity(0.12)
-                      : Colors.red.withOpacity(0.12),
+                  color:
+                      isAvailable
+                          ? Colors.green.withOpacity(0.12)
+                          : Colors.red.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
@@ -554,10 +564,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
                   children: [
                     const Text(
                       "Status Pelayanan",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -586,9 +593,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Colors.green.withOpacity(0.12),
-        ),
+        border: Border.all(color: Colors.green.withOpacity(0.12)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.035),
@@ -635,10 +640,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
                   "NIK $patientNik",
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
 
                 const SizedBox(height: 3),
@@ -647,10 +649,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
                   "No. Telepon $patientPhone",
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
             ),
@@ -679,10 +678,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
     );
   }
 
@@ -697,12 +693,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
 
         const SizedBox(height: 8),
 
@@ -743,10 +734,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
           ],
         ),
         child: Column(
@@ -758,9 +746,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -790,9 +776,7 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(
-          vertical: 18,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           color: isSelected ? Colors.green : Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -800,18 +784,12 @@ class _PatientRegisterScreenState extends State<PatientRegisterScreen> {
             color: isSelected ? Colors.green : Colors.grey.shade300,
           ),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
           ],
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : Colors.green,
-            ),
+            Icon(icon, color: isSelected ? Colors.white : Colors.green),
 
             const SizedBox(height: 8),
 
