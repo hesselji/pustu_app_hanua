@@ -55,6 +55,99 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
+  Future<void> _confirmLogout() async {
+  FocusManager.instance.primaryFocus?.unfocus();
+
+  final bool? confirm = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: Colors.red,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Keluar Akun?',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari akun pasien?',
+          style: TextStyle(
+            height: 1.4,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text('Batal'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Keluar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirm == true) {
+    await _logout();
+  }
+}
+
   String _maskPhone(String phone) {
     if (phone.isEmpty) return '-';
 
@@ -341,7 +434,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               ),
 
               InkWell(
-                onTap: _logout,
+                onTap: _confirmLogout,
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   padding: const EdgeInsets.all(10),
@@ -728,7 +821,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             subtitle: 'Logout pasien',
             icon: Icons.logout_rounded,
             color: Colors.red,
-            onTap: _logout,
+            onTap: _confirmLogout,
           ),
         ],
       ),
