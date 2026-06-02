@@ -198,7 +198,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 content: Text(
                   isAvailable
                       ? 'Petugas sedang tersedia. Pasien dapat melakukan pendaftaran berobat melalui aplikasi.'
-                      : 'Petugas sedang tidak tersedia. Pendaftaran belum dapat diproses sampai status pelayanan diaktifkan kembali.',
+                      : 'Petugas sedang tidak tersedia. Pendaftaran berobat tetap dapat dilakukan, hanya saja waktu tunggu konfirmasi oleh perawat akan lebih lama. Jika anda membutuhkan bantuan medis segera, hubungi perawat.',
                   style: const TextStyle(height: 1.45),
                 ),
                 actions: [
@@ -546,7 +546,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       Text(
                         isAvailable
                             ? 'Pasien dapat melakukan pendaftaran'
-                            : 'Pendaftaran belum dapat diproses',
+                            : 'Pendaftaran berobat tetap dapat dilakukan, hanya saja waktu tunggu konfirmasi akan lebih lama',
                         style: const TextStyle(
                           color: Colors.black54,
                           fontSize: 11,
@@ -680,7 +680,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.25,
+
+        // 🔥 SEBELUMNYA 1.25, INI PENYEBAB CARD TERLALU PENDEK
+        childAspectRatio: 1.05,
+
         children: [
           _menuItem(
             title: 'Daftar\nBerobat',
@@ -743,7 +746,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(22),
@@ -754,18 +757,18 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             Positioned(
               right: -8,
               bottom: -8,
-              child: Icon(icon, size: 62, color: color.withOpacity(0.10)),
+              child: Icon(icon, size: 58, color: color.withOpacity(0.10)),
             ),
 
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
                         color: color.withOpacity(0.25),
@@ -774,16 +777,18 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       ),
                     ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 23),
+                  child: Icon(icon, color: Colors.white, size: 22),
                 ),
 
                 const Spacer(),
 
                 Text(
                   title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 15,
-                    height: 1.15,
+                    fontSize: 14,
+                    height: 1.12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -792,7 +797,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
                 Text(
                   subtitle,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
                 ),
               ],
             ),
