@@ -28,7 +28,7 @@ class PatientDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            /// 🔥 HEADER CARD
+            
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(18),
