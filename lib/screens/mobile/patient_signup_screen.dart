@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../services/patient_auth_helper.dart';
@@ -62,90 +62,97 @@ class _PatientSignupScreenState extends State<PatientSignupScreen> {
     super.dispose();
   }
 
-  Future<void> registerPatient() async {
-    setState(() {
-      _isSubmitted = true;
+Future<void> registerPatient() async {
+  setState(() {
+    _isSubmitted = true;
+  });
+
+  if (!_formKey.currentState!.validate()) return;
+
+  FocusScope.of(context).unfocus();
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    final nama = namaController.text.trim();
+    final nik = nikController.text.trim();
+    final phone = PatientAuthHelper.normalizePhone(phoneController.text);
+    final password = passwordController.text.trim();
+
+    final existingPhone = await FirebaseFirestore.instance
+        .collection('patient_users')
+        .where('phone', isEqualTo: phone)
+        .limit(1)
+        .get();
+
+    if (existingPhone.docs.isNotEmpty) {
+      _showMessage('Nomor telepon sudah terdaftar');
+      return;
+    }
+
+    final existingNik = await FirebaseFirestore.instance
+        .collection('patient_users')
+        .where('nik', isEqualTo: nik)
+        .limit(1)
+        .get();
+
+    if (existingNik.docs.isNotEmpty) {
+      _showMessage('NIK sudah terdaftar');
+      return;
+    }
+
+    final docRef =
+        FirebaseFirestore.instance.collection('patient_users').doc();
+
+    final salt = PatientAuthHelper.generateSalt();
+    final passwordHash = PatientAuthHelper.hashPassword(password, salt);
+
+    await docRef.set({
+      'uid': docRef.id,
+      'nama': nama,
+      'nik': nik,
+      'phone': phone,
+      'password_hash': passwordHash,
+      'password_salt': salt,
+      'role': 'pasien',
+      'is_active': true,
+      'created_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
     });
 
-    if (!_formKey.currentState!.validate()) return;
+    await PatientAuthHelper.savePatientSession(
+      uid: docRef.id,
+      nama: nama,
+      nik: nik,
+      phone: phone,
+    );
 
-    FocusScope.of(context).unfocus();
-    setState(() => isLoading = true);
+    if (!mounted) return;
 
-    try {
-      final phone = PatientAuthHelper.normalizePhone(phoneController.text);
-      final email = PatientAuthHelper.phoneToEmail(phone);
-      final password = passwordController.text.trim();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Akun pasien berhasil dibuat'),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-      final existing = await FirebaseFirestore.instance
-          .collection('patient_users')
-          .where('phone', isEqualTo: phone)
-          .limit(1)
-          .get();
-
-      if (existing.docs.isNotEmpty) {
-        throw FirebaseAuthException(
-          code: 'phone-already-used',
-          message: 'Nomor telepon sudah terdaftar',
-        );
-      }
-
-      final credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      final uid = credential.user!.uid;
-
-      await FirebaseFirestore.instance
-          .collection('patient_users')
-          .doc(uid)
-          .set({
-        'uid': uid,
-        'nama': namaController.text.trim(),
-        'nik': nikController.text.trim(),
-        'phone': phone,
-        'email_internal': email,
-        'role': 'pasien',
-        'created_at': FieldValue.serverTimestamp(),
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const PatientHomeScreen()),
+      (route) => false,
+    );
+  } catch (e) {
+    _showMessage('Terjadi kesalahan: $e');
+  } finally {
+    if (mounted) {
+      setState(() {
+        isLoading = false;
       });
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Akun pasien berhasil dibuat'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const PatientHomeScreen()),
-        (route) => false,
-      );
-    } on FirebaseAuthException catch (e) {
-      String message = 'Registrasi gagal';
-
-      if (e.code == 'email-already-in-use' ||
-          e.code == 'phone-already-used') {
-        message = 'Nomor telepon sudah terdaftar';
-      } else if (e.code == 'weak-password') {
-        message = 'Password minimal 6 karakter';
-      } else if (e.code == 'invalid-email') {
-        message = 'Format akun tidak valid';
-      }
-
-      _showMessage(message);
-    } catch (e) {
-      _showMessage('Terjadi kesalahan: $e');
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
     }
   }
+}
 
   void _showMessage(String message) {
     if (!mounted) return;

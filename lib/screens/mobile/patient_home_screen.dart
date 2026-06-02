@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/patient_auth_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'home_screen.dart';
@@ -30,30 +30,30 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     _patientFuture = _getPatientData();
   }
 
-  Future<DocumentSnapshot<Map<String, dynamic>>?> _getPatientData() async {
-    final user = FirebaseAuth.instance.currentUser;
+Future<DocumentSnapshot<Map<String, dynamic>>?> _getPatientData() async {
+  final patientUid = await PatientAuthHelper.getCurrentPatientUid();
 
-    if (user == null) return null;
+  if (patientUid == null) return null;
 
-    return FirebaseFirestore.instance
-        .collection('patient_users')
-        .doc(user.uid)
-        .get();
-  }
+  return FirebaseFirestore.instance
+      .collection('patient_users')
+      .doc(patientUid)
+      .get();
+}
 
-  Future<void> _logout() async {
-    FocusManager.instance.primaryFocus?.unfocus();
+Future<void> _logout() async {
+  FocusManager.instance.primaryFocus?.unfocus();
 
-    await FirebaseAuth.instance.signOut();
+  await PatientAuthHelper.clearPatientSession();
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (route) => false,
-    );
-  }
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => const HomeScreen()),
+    (route) => false,
+  );
+}
 
   Future<void> _confirmLogout() async {
   FocusManager.instance.primaryFocus?.unfocus();

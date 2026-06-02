@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'patient_login_screen.dart';
+import 'patient_home_screen.dart';
 import 'login_screen.dart';
+import '../../services/patient_auth_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -165,11 +167,27 @@ class _HomeScreenState extends State<HomeScreen> {
             _menuCard(
               title: "Masuk sebagai Pasien",
               icon: Icons.person,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PatientLoginScreen()),
-                );
+              onTap: () async {
+                final patientUid =
+                    await PatientAuthHelper.getCurrentPatientUid();
+
+                if (!context.mounted) return;
+
+                if (patientUid != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PatientHomeScreen(),
+                    ),
+                  );
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PatientLoginScreen(),
+                    ),
+                  );
+                }
               },
             ),
 

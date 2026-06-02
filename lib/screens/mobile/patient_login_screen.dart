@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../services/patient_auth_helper.dart';
@@ -59,71 +59,80 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
     super.dispose();
   }
 
-  Future<void> loginPatient() async {
-    setState(() {
-      _isSubmitted = true;
-    });
+Future<void> loginPatient() async {
+  setState(() {
+    _isSubmitted = true;
+  });
 
-    if (!_formKey.currentState!.validate()) return;
+  final isValid = _formKey.currentState?.validate() ?? false;
+  if (!isValid) return;
 
-    FocusScope.of(context).unfocus();
-    setState(() => isLoading = true);
+  FocusManager.instance.primaryFocus?.unfocus();
 
-    try {
-      final phone = PatientAuthHelper.normalizePhone(phoneController.text);
-      final email = PatientAuthHelper.phoneToEmail(phone);
+  setState(() {
+    isLoading = true;
+  });
 
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: passwordController.text.trim(),
-      );
+  try {
+    final phone = PatientAuthHelper.normalizePhone(phoneController.text);
+    final password = passwordController.text.trim();
 
-      final uid = credential.user!.uid;
+    final query = await FirebaseFirestore.instance
+        .collection('patient_users')
+        .where('phone', isEqualTo: phone)
+        .limit(1)
+        .get();
 
-      final patientDoc = await FirebaseFirestore.instance
-          .collection('patient_users')
-          .doc(uid)
-          .get();
+    if (query.docs.isEmpty) {
+      _showMessage('Nomor telepon atau password salah');
+      return;
+    }
 
-      if (!patientDoc.exists) {
-        await FirebaseAuth.instance.signOut();
+    final doc = query.docs.first;
+    final data = doc.data();
 
-        throw FirebaseAuthException(
-          code: 'patient-not-found',
-          message: 'Akun pasien tidak ditemukan',
-        );
-      }
+    final bool isActive = data['is_active'] ?? true;
 
-      if (!mounted) return;
+    if (!isActive) {
+      _showMessage('Akun pasien sedang dinonaktifkan');
+      return;
+    }
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const PatientHomeScreen()),
-        (route) => false,
-      );
-    } on FirebaseAuthException catch (e) {
-      String message = 'Login gagal';
+    final String salt = data['password_salt'] ?? '';
+    final String savedHash = data['password_hash'] ?? '';
+    final String inputHash = PatientAuthHelper.hashPassword(password, salt);
 
-      if (e.code == 'user-not-found' ||
-          e.code == 'wrong-password' ||
-          e.code == 'invalid-credential' ||
-          e.code == 'invalid-email') {
-        message = 'Nomor telepon atau password salah';
-      } else if (e.code == 'patient-not-found') {
-        message = 'Akun pasien tidak ditemukan';
-      } else if (e.code == 'too-many-requests') {
-        message = 'Terlalu banyak percobaan login. Coba lagi nanti.';
-      }
+    if (inputHash != savedHash) {
+      _showMessage('Nomor telepon atau password salah');
+      return;
+    }
 
-      _showMessage(message);
-    } catch (e) {
-      _showMessage('Terjadi kesalahan: $e');
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+    await PatientAuthHelper.savePatientSession(
+      uid: doc.id,
+      nama: data['nama'] ?? 'Pasien',
+      nik: data['nik'] ?? '-',
+      phone: data['phone'] ?? phone,
+    );
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PatientHomeScreen(),
+      ),
+      (route) => false,
+    );
+  } catch (e) {
+    _showMessage('Terjadi kesalahan: $e');
+  } finally {
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
+}
 
   void _showMessage(String message) {
     if (!mounted) return;
