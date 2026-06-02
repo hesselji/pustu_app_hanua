@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'patient_home_screen.dart';
+import 'patient_login_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,16 +10,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF5F7FA),
 
       body: SafeArea(
         child: Column(
           children: [
-
             /// 🔥 HEADER (LOGO + TITLE)
             Container(
               padding: const EdgeInsets.all(16),
@@ -67,10 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   "Selamat Datang 👋",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -110,7 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Stack(
                 children: [
-
                   /// ICON BACKGROUND
                   Positioned(
                     right: -20,
@@ -129,11 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(
-                          Icons.home_work,
-                          color: Colors.white,
-                          size: 30,
-                        ),
+                        Icon(Icons.home_work, color: Colors.white, size: 30),
                         SizedBox(height: 10),
                         Text(
                           "Pustu Hanua",
@@ -146,10 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         SizedBox(height: 5),
                         Text(
                           "Tempat layanan kesehatan masyarakat",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                       ],
                     ),
@@ -180,9 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const PatientHomeScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const PatientLoginScreen()),
                 );
               },
             ),
@@ -234,10 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 6,
-              ),
+              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6),
             ],
           ),
           child: Row(
@@ -245,12 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Icon(icon, color: Colors.green),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
