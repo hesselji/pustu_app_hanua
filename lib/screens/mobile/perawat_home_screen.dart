@@ -27,8 +27,10 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
   bool isLoading = true;
   bool isEmailVisible = false;
 
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> todayRegistrationStream;
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> pendingRegistrationStream;
+  late final Stream<QuerySnapshot<Map<String, dynamic>>>
+  todayRegistrationStream;
+  late final Stream<QuerySnapshot<Map<String, dynamic>>>
+  pendingRegistrationStream;
   late final Stream<QuerySnapshot<Map<String, dynamic>>> patientStream;
   late final Stream<DocumentSnapshot<Map<String, dynamic>>> serviceStatusStream;
 
@@ -38,12 +40,14 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
 
     todayRegistrationStream = _buildTodayRegistrationStream();
     pendingRegistrationStream = _buildPendingRegistrationStream();
-    patientStream = FirebaseFirestore.instance.collection('patients').snapshots();
+    patientStream =
+        FirebaseFirestore.instance.collection('patients').snapshots();
 
-    serviceStatusStream = FirebaseFirestore.instance
-        .collection('service_status')
-        .doc('status')
-        .snapshots();
+    serviceStatusStream =
+        FirebaseFirestore.instance
+            .collection('service_status')
+            .doc('status')
+            .snapshots();
 
     fetchUser();
   }
@@ -60,7 +64,8 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
         .snapshots();
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> _buildPendingRegistrationStream() {
+  Stream<QuerySnapshot<Map<String, dynamic>>>
+  _buildPendingRegistrationStream() {
     return FirebaseFirestore.instance
         .collection('registrations')
         .where('status', whereIn: ['Pending', 'pending', 'PENDING'])
@@ -83,11 +88,12 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
     }
 
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: user.email)
-          .limit(1)
-          .get();
+      final query =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('email', isEqualTo: user.email)
+              .limit(1)
+              .get();
 
       if (!mounted) return;
 
@@ -170,10 +176,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                   color: Colors.red.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
-                  Icons.logout_rounded,
-                  color: Colors.red,
-                ),
+                child: const Icon(Icons.logout_rounded, color: Colors.red),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -292,11 +295,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            darkGreen,
-            primaryGreen,
-            const Color(0xFF43A047),
-          ],
+          colors: [darkGreen, primaryGreen, const Color(0xFF43A047)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -334,10 +333,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                     SizedBox(height: 3),
                     Text(
                       "Dashboard Perawat",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -351,9 +347,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.16),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.18),
-                    ),
+                    border: Border.all(color: Colors.white.withOpacity(0.18)),
                   ),
                   child: const Icon(
                     Icons.logout_rounded,
@@ -376,9 +370,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.18),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.25),
-                  ),
+                  border: Border.all(color: Colors.white.withOpacity(0.25)),
                 ),
                 child: const Icon(
                   Icons.medical_services_rounded,
@@ -394,32 +386,29 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                   children: [
                     const Text(
                       "Selamat bertugas 👋",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                     const SizedBox(height: 3),
 
                     isLoading
                         ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            username.isEmpty ? "Perawat" : username,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 23,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
+                        )
+                        : Text(
+                          username.isEmpty ? "Perawat" : username,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
 
                     const SizedBox(height: 4),
 
@@ -427,10 +416,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                       "Pengelolaan layanan kesehatan digital",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -530,9 +516,10 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                   width: 54,
                   height: 54,
                   decoration: BoxDecoration(
-                    color: isAvailable
-                        ? const Color(0xFFE8F5E9)
-                        : const Color(0xFFFFEBEE),
+                    color:
+                        isAvailable
+                            ? const Color(0xFFE8F5E9)
+                            : const Color(0xFFFFEBEE),
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Icon(
@@ -552,10 +539,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                     children: [
                       const Text(
                         "Status Pelayanan",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -591,9 +575,10 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                     vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    color: isAvailable
-                        ? Colors.green.withOpacity(0.10)
-                        : Colors.red.withOpacity(0.10),
+                    color:
+                        isAvailable
+                            ? Colors.green.withOpacity(0.10)
+                            : Colors.red.withOpacity(0.10),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -635,17 +620,11 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.14),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.18),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 22,
-          ),
+          Icon(icon, color: Colors.white, size: 22),
           const SizedBox(width: 9),
 
           Expanded(
@@ -656,10 +635,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 10,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 10),
                 ),
                 const SizedBox(height: 2),
 
@@ -692,10 +668,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
             ),
           ),
 
-          if (trailing != null) ...[
-            const SizedBox(width: 4),
-            trailing,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 4), trailing],
         ],
       ),
     );
@@ -745,9 +718,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: _serviceStatisticCard(),
-            ),
+            Expanded(child: _serviceStatisticCard()),
           ],
         ),
       ],
@@ -792,9 +763,10 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
         }
 
         return _baseStatisticCard(
-          icon: isAvailable
-              ? Icons.health_and_safety_rounded
-              : Icons.warning_amber_rounded,
+          icon:
+              isAvailable
+                  ? Icons.health_and_safety_rounded
+                  : Icons.warning_amber_rounded,
           title: "Status",
           value: isAvailable ? "Aktif" : "Nonaktif",
           label: "Layanan",
@@ -814,7 +786,8 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
     required Color color,
   }) {
     return Container(
-      height: 165,
+      // 🔥 Dinaikkan agar teks bawah tidak tenggelam
+      height: 190,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -832,11 +805,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
           Positioned(
             right: -8,
             bottom: -10,
-            child: Icon(
-              icon,
-              color: color.withOpacity(0.08),
-              size: 64,
-            ),
+            child: Icon(icon, color: color.withOpacity(0.07), size: 64),
           ),
 
           Column(
@@ -849,14 +818,10 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                   color: color.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
+                child: Icon(icon, color: color, size: 24),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               Text(
                 title,
@@ -864,12 +829,12 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.grey.shade600,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
 
               Text(
                 value,
@@ -877,11 +842,11 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 21,
+                  fontSize: 22,
                 ),
               ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
 
               Text(
                 "$label • $subtitle",
@@ -889,8 +854,8 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.grey.shade600,
-                  fontSize: 10.5,
-                  height: 1.25,
+                  fontSize: 11,
+                  height: 1.35,
                 ),
               ),
             ],
@@ -944,9 +909,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const PatientListScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const PatientListScreen()),
               );
             },
           ),
@@ -986,9 +949,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const RekapanBulananPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const RekapanBulananPage()),
               );
             },
           ),
@@ -1019,20 +980,14 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
         decoration: BoxDecoration(
           color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: color.withOpacity(0.12),
-          ),
+          border: Border.all(color: color.withOpacity(0.12)),
         ),
         child: Stack(
           children: [
             Positioned(
               right: -8,
               bottom: -8,
-              child: Icon(
-                icon,
-                size: 58,
-                color: color.withOpacity(0.10),
-              ),
+              child: Icon(icon, size: 58, color: color.withOpacity(0.10)),
             ),
 
             Column(
@@ -1052,11 +1007,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 23,
-                  ),
+                  child: Icon(icon, color: Colors.white, size: 23),
                 ),
 
                 const Spacer(),
@@ -1078,10 +1029,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -1097,17 +1045,12 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            softGreen,
-            Colors.white,
-          ],
+          colors: [softGreen, Colors.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: Colors.green.withOpacity(0.12),
-        ),
+        border: Border.all(color: Colors.green.withOpacity(0.12)),
       ),
       child: Row(
         children: [
@@ -1133,10 +1076,7 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
               children: [
                 Text(
                   "Pustu Hanua Digital",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 SizedBox(height: 5),
                 Text(
@@ -1155,27 +1095,18 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
     );
   }
 
-  Widget _sectionTitle({
-    required String title,
-    required String subtitle,
-  }) {
+  Widget _sectionTitle({required String title, required String subtitle}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 3),
         Text(
           subtitle,
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
         ),
       ],
     );
@@ -1190,16 +1121,10 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(17),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8),
         ],
       ),
-      child: Image.asset(
-        assetPath,
-        fit: BoxFit.contain,
-      ),
+      child: Image.asset(assetPath, fit: BoxFit.contain),
     );
   }
 }
