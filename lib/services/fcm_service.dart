@@ -50,7 +50,7 @@ class FcmService {
   }
 
   static Future<void> _setupLocalNotification() async {
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('ic_stat_pustu');
 
     const initSettings = InitializationSettings(
       android: androidInit,
@@ -84,7 +84,7 @@ class FcmService {
             importance: Importance.high,
             priority: Priority.high,
             playSound: true,
-            icon: '@mipmap/ic_launcher',
+            icon: 'ic_stat_pustu',
           ),
         ),
       );
