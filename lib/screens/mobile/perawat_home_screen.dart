@@ -8,6 +8,7 @@ import 'perawat_manageinfo_pelayanan.dart';
 import 'perawat_laporanBulanan.dart';
 import 'medical_patient_list_screen.dart';
 import 'perawat_kelolaPendaftaran.dart';
+import 'perawat_backup_recovery_screen.dart';
 
 class PerawatHomeScreen extends StatefulWidget {
   const PerawatHomeScreen({super.key});
@@ -880,105 +881,112 @@ class _PerawatHomeScreenState extends State<PerawatHomeScreen> {
     );
   }
 
-  Widget _mainMenuGrid() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
-          ),
-        ],
-      ),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.02,
-        children: [
-          _menuItem(
-            title: "Kelola\nPendaftaran",
-            subtitle: "Data daftar berobat",
-            icon: Icons.assignment_rounded,
-            color: Colors.blue,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PerawatKelolaPendaftaranScreen(),
-                ),
-              );
-            },
-          ),
-          _menuItem(
-            title: "Data\nPasien",
-            subtitle: "Identitas pasien",
-            icon: Icons.people_alt_rounded,
-            color: Colors.green,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PatientListScreen()),
-              );
-            },
-          ),
-          _menuItem(
-            title: "Rekam\nMedis",
-            subtitle: "Riwayat pelayanan",
-            icon: Icons.medical_information_rounded,
-            color: Colors.teal,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const MedicalPatientListScreen(),
-                ),
-              );
-            },
-          ),
-          _menuItem(
-            title: "Informasi\nPelayanan",
-            subtitle: "Status layanan",
-            icon: Icons.campaign_rounded,
-            color: Colors.orange,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const InformasiPelayananScreen(),
-                ),
-              );
-            },
-          ),
-          _menuItem(
-            title: "Laporan\nBulanan",
-            subtitle: "Rekap pelayanan",
-            icon: Icons.bar_chart_rounded,
-            color: Colors.deepPurple,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const RekapanBulananPage()),
-              );
-            },
-          ),
-          _menuItem(
-            title: "Keluar\nAkun",
-            subtitle: "Logout perawat",
-            icon: Icons.logout_rounded,
-            color: Colors.red,
-            onTap: _confirmLogout,
-          ),
-        ],
-      ),
-    );
-  }
+Widget _mainMenuGrid() {
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(26),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.06),
+          blurRadius: 14,
+          offset: const Offset(0, 7),
+        ),
+      ],
+    ),
+    child: GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.02,
+      children: [
+        _menuItem(
+          title: "Kelola\nPendaftaran",
+          subtitle: "Data daftar berobat",
+          icon: Icons.assignment_rounded,
+          color: Colors.blue,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const PerawatKelolaPendaftaranScreen(),
+              ),
+            );
+          },
+        ),
+        _menuItem(
+          title: "Data\nPasien",
+          subtitle: "Identitas pasien",
+          icon: Icons.people_alt_rounded,
+          color: Colors.green,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PatientListScreen()),
+            );
+          },
+        ),
+        _menuItem(
+          title: "Rekam\nMedis",
+          subtitle: "Riwayat pelayanan",
+          icon: Icons.medical_information_rounded,
+          color: Colors.teal,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const MedicalPatientListScreen(),
+              ),
+            );
+          },
+        ),
+        _menuItem(
+          title: "Informasi\nPelayanan",
+          subtitle: "Status layanan",
+          icon: Icons.campaign_rounded,
+          color: Colors.orange,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const InformasiPelayananScreen(),
+              ),
+            );
+          },
+        ),
+        _menuItem(
+          title: "Laporan\nBulanan",
+          subtitle: "Rekap pelayanan",
+          icon: Icons.bar_chart_rounded,
+          color: Colors.deepPurple,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RekapanBulananPage()),
+            );
+          },
+        ),
+        _menuItem(
+          title: "Backup\nRecovery",
+          subtitle: "Cadangan data",
+          icon: Icons.backup_rounded,
+          color: Colors.indigo,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const PerawatBackupRecoveryScreen(),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _menuItem({
     required String title,
