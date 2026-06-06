@@ -1,5 +1,19 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+/*import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:excel/excel.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;*/
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 class RekapanBulananPage extends StatefulWidget {
   const RekapanBulananPage({super.key});
@@ -10,6 +24,17 @@ class RekapanBulananPage extends StatefulWidget {
 
 class _RekapanBulananPageState extends State<RekapanBulananPage> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  pw.Widget pdfRow(String label, String value) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(width: 170, child: pw.Text(label)),
+        pw.Text(": "),
+        pw.Expanded(child: pw.Text(value)),
+      ],
+    );
+  }
 
   final List<String> bulanList = const [
     "Januari",
@@ -169,6 +194,38 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
               ),
 
             if (showResult) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.picture_as_pdf),
+                      label: const Text("PDF"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: exportPDF,
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.table_chart),
+                      label: const Text("Excel"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: exportExcel,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
               /// 🔴 TOTAL KUNJUNGAN
               GestureDetector(
                 onTap: showDetailKunjungan,
@@ -351,11 +408,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     detailKunjungan.clear();
 
     Set<String> pasienUnik = {};
-
-    /// 🔥 AGAR GENDER TIDAK DOBEL
     Set<String> pasienGenderTerhitung = {};
-
-    /// 🔥 AGAR UMUR TIDAK DOBEL
     Set<String> pasienUmurTerhitung = {};
 
     int bulanAngka = bulanList.indexOf(submittedBulan!) + 1;
@@ -527,6 +580,611 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   /// =========================
   /// UTIL
   /// =========================
+  Future<void> exportPDF() async {
+    final pdf = pw.Document();
+
+    final now = DateTime.now();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+
+        build:
+            (context) => [
+              /// =========================
+              /// HEADER
+              /// =========================
+              pw.Center(
+                child: pw.Text(
+                  "REKAPAN BULANAN ${submittedBulan!.toUpperCase()} $submittedTahun\n"
+                  "PUSKESMAS PEMBANTU (PUSTU) HANUA",
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    fontSize: 15,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              pw.SizedBox(height: 4),
+
+              pw.Center(
+                child: pw.Text(
+                  "Desa Hanua, Kecamatan Banama Tingang,\n"
+                  "Kabupaten Pulang Pisau, Provinsi Kalimantan Tengah",
+                  textAlign: pw.TextAlign.center,
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ),
+
+              pw.SizedBox(height: 8),
+
+              pw.Divider(thickness: 1.5),
+
+              pw.SizedBox(height: 12),
+
+              /// =========================
+              /// TOTAL
+              /// =========================
+              pw.Row(
+                children: [
+                  pw.SizedBox(
+                    width: 170,
+                    child: pw.Text(
+                      "Total Kunjungan",
+                      style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  pw.Text(
+                    ":",
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  pw.SizedBox(width: 5),
+                  pw.Text(
+                    "$totalKunjungan",
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              pw.Row(
+                children: [
+                  pw.SizedBox(
+                    width: 170,
+                    child: pw.Text(
+                      "Total Pasien",
+                      style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  pw.Text(
+                    ":",
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  pw.SizedBox(width: 5),
+                  pw.Text(
+                    "$totalPasien",
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 12),
+
+              /// =========================
+              /// JENIS KELAMIN
+              /// =========================
+              pw.Text(
+                "Jenis Kelamin",
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+
+              pw.SizedBox(height: 4),
+
+              pdfRow("Laki-laki", "$laki"),
+              pdfRow("Perempuan", "$perempuan"),
+
+              pw.SizedBox(height: 12),
+
+              /// =========================
+              /// RENTANG UMUR
+              /// =========================
+              pw.Text(
+                "Rentang Umur",
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+
+              pw.SizedBox(height: 4),
+
+              pdfRow(
+                "Bayi (0 s.d 11 Bulan)",
+                "${umurMap["Bayi (0–11 bulan)"] ?? 0}",
+              ),
+
+              pdfRow(
+                "Anak-anak (1 s.d 9 Tahun)",
+                "${umurMap["Anak-anak (1–9 tahun)"] ?? 0}",
+              ),
+
+              pdfRow(
+                "Remaja (10 s.d 18 Tahun)",
+                "${umurMap["Remaja (10–18 tahun)"] ?? 0}",
+              ),
+
+              pdfRow(
+                "Pemuda (19 s.d 29 Tahun)",
+                "${umurMap["Pemuda (19–29 tahun)"] ?? 0}",
+              ),
+
+              pdfRow(
+                "Dewasa (30 s.d 59 Tahun)",
+                "${umurMap["Dewasa (30–59 tahun)"] ?? 0}",
+              ),
+
+              pdfRow(
+                "Lansia (60 Tahun ke Atas)",
+                "${umurMap["Lansia (≥60)"] ?? 0}",
+              ),
+
+              pw.SizedBox(height: 12),
+
+              /// =========================
+              /// DIAGNOSIS
+              /// =========================
+              pw.Text(
+                "Daftar Diagnosis",
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+
+              pw.SizedBox(height: 5),
+
+              if (penyakitMap.isEmpty)
+                pw.Text("Tidak ada data")
+              else
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(35),
+                    1: const pw.FlexColumnWidth(),
+                    2: const pw.FixedColumnWidth(60),
+                  },
+                  children: [
+                    /// HEADER TABEL
+                    pw.TableRow(
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                            "No",
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+                        ),
+
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                            "Diagnosis",
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+                        ),
+
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                            "Jumlah",
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    ...penyakitMap.entries.toList().asMap().entries.map((
+                      entry,
+                    ) {
+                      int no = entry.key + 1;
+                      var item = entry.value;
+
+                      return pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(5),
+                            child: pw.Text(
+                              "$no",
+                              textAlign: pw.TextAlign.center,
+                            ),
+                          ),
+
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(5),
+                            child: pw.Text(item.key),
+                          ),
+
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(5),
+                            child: pw.Text(
+                              "${item.value}",
+                              textAlign: pw.TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+
+              pw.SizedBox(height: 12),
+
+              /// =========================
+              /// DETAIL KUNJUNGAN PASIEN
+              /// =========================
+              pw.Text(
+                "Detail Kunjungan Pasien",
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+
+              if (detailKunjungan.isEmpty)
+                pw.Text("Tidak ada data")
+              else
+                ...detailKunjungan.entries.map(
+                  (pasien) => pw.Container(
+                    margin: const pw.EdgeInsets.only(bottom: 4),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          pasien.key,
+                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                        ),
+
+                        ...pasien.value.map(
+                          (item) => pw.Padding(
+                            padding: const pw.EdgeInsets.only(left: 15),
+                            child: pw.Text(
+                              "- ${item["tanggal"]} : ${item["diagnosa"]}",
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              pw.SizedBox(height: 25),
+
+              /// =========================
+              /// FOOTER TTD
+              /// =========================
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      "Dicetak pada : "
+                      "${now.day}/${now.month}/${now.year}",
+                    ),
+
+                    pw.SizedBox(height: 15),
+
+                    pw.Text("Petugas Pustu Hanua"),
+
+                    pw.SizedBox(height: 50),
+
+                    pw.Text("(____________________)"),
+                  ],
+                ),
+              ),
+            ],
+      ),
+    );
+
+    final dir = await getApplicationDocumentsDirectory();
+
+    final file = File("${dir.path}/${getNamaFile()}.pdf");
+
+    await file.writeAsBytes(await pdf.save());
+
+    await OpenFilex.open(file.path);
+  }
+
+  Future<void> exportExcel() async {
+    var excel = Excel.createExcel();
+
+    /// Gunakan sheet default saja
+    String sheetName = excel.getDefaultSheet()!;
+    Sheet sheet = excel[sheetName];
+
+    /// Lebar kolom
+    sheet.setColumnWidth(0, 45);
+    sheet.setColumnWidth(1, 5);
+    sheet.setColumnWidth(2, 20);
+
+    final boldStyle = CellStyle(bold: true);
+
+    int row = 0;
+
+    /// =========================
+    /// JUDUL
+    /// =========================
+
+    sheet.merge(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+      CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
+    );
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue(
+      "REKAPAN BULANAN ${submittedBulan!.toUpperCase()} $submittedTahun",
+    );
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle = boldStyle;
+
+    row++;
+
+    sheet.merge(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+      CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
+    );
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("PUSKESMAS PEMBANTU (PUSTU) HANUA");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle = boldStyle;
+
+    row++;
+
+    sheet.merge(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+      CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
+    );
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue(
+      "Desa Hanua, Kecamatan Banama Tingang, Kabupaten Pulang Pisau, Provinsi Kalimantan Tengah",
+    );
+
+    row += 2;
+
+    /// =========================
+    /// TOTAL KUNJUNGAN
+    /// =========================
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Total Kunjungan");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle = boldStyle;
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+        .value = TextCellValue(":");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+        .value = IntCellValue(totalKunjungan);
+
+    row++;
+
+    /// =========================
+    /// TOTAL PASIEN
+    /// =========================
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Total Pasien");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle = boldStyle;
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+        .value = TextCellValue(":");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+        .value = IntCellValue(totalPasien);
+
+    row += 2;
+
+    /// =========================
+    /// JENIS KELAMIN
+    /// =========================
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Jenis Kelamin");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle = boldStyle;
+
+    row++;
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Laki-laki");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+        .value = TextCellValue(":");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+        .value = IntCellValue(laki);
+
+    row++;
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Perempuan");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+        .value = TextCellValue(":");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+        .value = IntCellValue(perempuan);
+
+    row += 2;
+
+    /// =========================
+    /// RENTANG UMUR
+    /// =========================
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Rentang Umur");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle = boldStyle;
+
+    row++;
+
+    final umurData = [
+      ["Bayi (0 s.d 11 Bulan)", umurMap["Bayi (0–11 bulan)"] ?? 0],
+      ["Anak-anak (1 s.d 9 Tahun)", umurMap["Anak-anak (1–9 tahun)"] ?? 0],
+      ["Remaja (10 s.d 18 Tahun)", umurMap["Remaja (10–18 tahun)"] ?? 0],
+      ["Pemuda (19 s.d 29 Tahun)", umurMap["Pemuda (19–29 tahun)"] ?? 0],
+      ["Dewasa (30 s.d 59 Tahun)", umurMap["Dewasa (30–59 tahun)"] ?? 0],
+      ["Lansia (60 Tahun ke Atas)", umurMap["Lansia (≥60)"] ?? 0],
+    ];
+
+    for (var item in umurData) {
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+          .value = TextCellValue(item[0].toString());
+
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+          .value = TextCellValue(":");
+
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+          .value = IntCellValue(item[1] as int);
+
+      row++;
+    }
+
+    row++;
+
+    /// =========================
+    /// DAFTAR DIAGNOSIS
+    /// =========================
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Daftar Diagnosis");
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle = boldStyle;
+
+    row++;
+
+    if (penyakitMap.isEmpty) {
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+          .value = TextCellValue("Tidak ada data");
+
+      row++;
+    } else {
+      penyakitMap.forEach((penyakit, jumlah) {
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+            .value = TextCellValue(penyakit);
+
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+            .value = TextCellValue(":");
+
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+            .value = IntCellValue(jumlah);
+
+        row++;
+      });
+    }
+
+    row += 2;
+
+    /// =========================
+    /// FOOTER
+    /// =========================
+
+    final now = DateTime.now();
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue(
+      "Dicetak pada : ${now.day}/${now.month}/${now.year}",
+    );
+
+    row += 2;
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("Petugas Pustu Hanua");
+
+    row += 4;
+
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .value = TextCellValue("(____________________)");
+
+    final dir = await getApplicationDocumentsDirectory();
+
+    final file = File("${dir.path}/${getNamaFile()}.xlsx");
+
+    await file.writeAsBytes(excel.encode()!);
+
+    await OpenFilex.open(file.path);
+  }
+
+  String getNamaFile() {
+    return "Rekapan_Bulanan_${submittedBulan}_${submittedTahun}";
+  }
 
   DateTime? parseTanggal(String text) {
     try {
