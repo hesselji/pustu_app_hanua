@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/services.dart';
 
 class AddMedicalRecordScreen extends StatefulWidget {
   final String patientId;
@@ -33,15 +32,26 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
   final alergiMakanan = TextEditingController();
 
   bool loading = false;
-  List<String> daftarDiagnosa = [];
+  String selectedDiagnosaId = "";
 
   @override
-  void initState() {
-    super.initState();
-    loadDiagnosa();
+  void dispose() {
+    tgl.dispose();
+    keluhan.dispose();
+    td1.dispose();
+    td2.dispose();
+    nadi.dispose();
+    suhu.dispose();
+    gula.dispose();
+    kolesterol.dispose();
+    asamUrat.dispose();
+    diagnosa.dispose();
+    terapi.dispose();
+    alergiObat.dispose();
+    alergiMakanan.dispose();
+    super.dispose();
   }
 
-  /// 📅 DATE PICKER
   Future<void> pickDate() async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -58,235 +68,154 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
     }
   }
 
-  Future<void> loadDiagnosa() async {
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection("disease_master")
-            .orderBy("nama")
-            .get();
-
-    setState(() {
-      daftarDiagnosa = snapshot.docs.map((e) => e['nama'].toString()).toList();
-    });
-  }
-
-  Future<void> tambahDiagnosaBaru() async {
-    final controller = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text("Tambah Diagnosa"),
-            content: TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: "Masukkan nama penyakit",
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Batal"),
-              ),
-
-              ElevatedButton(
-                onPressed: () async {
-                  if (controller.text.trim().isEmpty) return;
-
-                  await FirebaseFirestore.instance
-                      .collection("disease_master")
-                      .add({
-                        "nama": controller.text.trim(),
-                        "created_at": FieldValue.serverTimestamp(),
-                      });
-
-                  Navigator.pop(context);
-
-                  await loadDiagnosa();
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Diagnosa berhasil ditambahkan"),
-                    ),
-                  );
-                },
-                child: const Text("Simpan"),
-              ),
-            ],
-          ),
-    );
-  }
-
   Future<void> pilihDiagnosa() async {
     final searchController = TextEditingController();
-
-    List<String> filtered = List.from(daftarDiagnosa);
+    String searchText = "";
 
     await showDialog(
       context: context,
       builder: (_) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (context, setModal) {
             return AlertDialog(
-              title: const Text("Pilih Diagnosa"),
-
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.healing_rounded,
+                      color: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      "Pilih Diagnosis",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
               content: SizedBox(
                 width: 400,
-                height: 450,
+                height: 430,
                 child: Column(
                   children: [
-                    /// 🔍 SEARCH
                     TextField(
                       controller: searchController,
                       decoration: InputDecoration(
-                        hintText: "Cari penyakit...",
+                        hintText: "Cari diagnosis...",
                         prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: const Color(0xFFF5F7FA),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                       onChanged: (value) {
-                        setModalState(() {
-                          filtered =
-                              daftarDiagnosa.where((item) {
-                                return item.toLowerCase().contains(
-                                  value.toLowerCase(),
-                                );
-                              }).toList();
+                        setModal(() {
+                          searchText = value.toLowerCase();
                         });
                       },
                     ),
-
-                    const SizedBox(height: 15),
-
-                    /// LIST
+                    const SizedBox(height: 14),
                     Expanded(
-                      child:
-                          filtered.isEmpty
-                              ? const Center(child: Text("Tidak ada data"))
-                              : ListView.builder(
-                                itemCount: filtered.length,
-                                itemBuilder: (context, index) {
-                                  final item = filtered[index];
-
-                                  return Card(
-                                    child: ListTile(
-                                      title: Text(item),
-
-                                      onTap: () {
-                                        diagnosa.text = item;
-                                        Navigator.pop(context);
-                                      },
-                                      trailing: Transform.translate(
-                                        offset: const Offset(12, 0),
-                                        child: IconButton(
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                            color: Colors.red,
-                                          ),
-
-                                          onPressed: () async {
-                                            bool? confirm = await showDialog(
-                                              context: context,
-                                              builder:
-                                                  (_) => AlertDialog(
-                                                    title: const Text(
-                                                      "Hapus Diagnosa",
-                                                    ),
-                                                    content: Text(
-                                                      "Yakin ingin menghapus \"$item\" ?",
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                            context,
-                                                            false,
-                                                          );
-                                                        },
-                                                        child: const Text(
-                                                          "Batal",
-                                                        ),
-                                                      ),
-
-                                                      ElevatedButton(
-                                                        style:
-                                                            ElevatedButton.styleFrom(
-                                                              backgroundColor:
-                                                                  Colors.red,
-                                                            ),
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                            context,
-                                                            true,
-                                                          );
-                                                        },
-                                                        child: const Text(
-                                                          "Hapus",
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                            );
-
-                                            if (confirm != true) return;
-
-                                            final snapshot =
-                                                await FirebaseFirestore.instance
-                                                    .collection(
-                                                      "disease_master",
-                                                    )
-                                                    .where(
-                                                      "nama",
-                                                      isEqualTo: item,
-                                                    )
-                                                    .get();
-
-                                            for (var doc in snapshot.docs) {
-                                              await doc.reference.delete();
-                                            }
-
-                                            await loadDiagnosa();
-
-                                            setModalState(() {
-                                              filtered = List.from(
-                                                daftarDiagnosa,
-                                              );
-                                            });
-
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  "Diagnosa berhasil dihapus",
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
+                      child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance
+                            .collection("disease_master")
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.green,
                               ),
+                            );
+                          }
+
+                          final docs = snapshot.data!.docs.where((doc) {
+                            final data = doc.data();
+
+                            if (data["is_deleted"] == true) return false;
+
+                            final nama =
+                                (data["nama"] ?? "").toString().toLowerCase();
+
+                            return nama.contains(searchText);
+                          }).toList();
+
+                          docs.sort((a, b) {
+                            final namaA = (a.data()["nama"] ?? "")
+                                .toString()
+                                .toLowerCase();
+                            final namaB = (b.data()["nama"] ?? "")
+                                .toString()
+                                .toLowerCase();
+
+                            return namaA.compareTo(namaB);
+                          });
+
+                          if (docs.isEmpty) {
+                            return const Center(
+                              child: Text(
+                                "Diagnosis belum tersedia.\nTambahkan melalui menu Kelola Diagnosis.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            itemCount: docs.length,
+                            itemBuilder: (context, index) {
+                              final doc = docs[index];
+                              final data = doc.data();
+                              final nama = data["nama"] ?? "-";
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F7FA),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.medical_information_rounded,
+                                    color: Colors.green,
+                                  ),
+                                  title: Text(
+                                    nama,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    setState(() {
+                                      selectedDiagnosaId = doc.id;
+                                      diagnosa.text = nama;
+                                    });
+
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
-
               actions: [
-                /// TAMBAH
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await tambahDiagnosaBaru();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text("Tambah"),
-                ),
-
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text("Tutup"),
@@ -297,64 +226,153 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
         );
       },
     );
+
+    
   }
 
-  /// 🔥 SAVE DATA
+  bool isNumber(String value) {
+    return value.trim().isEmpty || double.tryParse(value.trim()) != null;
+  }
+
   Future<void> saveData() async {
-    if (tgl.text.isEmpty || keluhan.text.isEmpty) {
+    if (tgl.text.trim().isEmpty || keluhan.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Tanggal & Keluhan wajib diisi")),
+        const SnackBar(
+          content: Text("Tanggal dan keluhan wajib diisi"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!isNumber(td1.text) ||
+        !isNumber(td2.text) ||
+        !isNumber(nadi.text) ||
+        !isNumber(suhu.text) ||
+        !isNumber(gula.text) ||
+        !isNumber(kolesterol.text) ||
+        !isNumber(asamUrat.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Input angka tidak valid"),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     setState(() => loading = true);
 
-    await FirebaseFirestore.instance
-        .collection("patients")
-        .doc(widget.patientId)
-        .collection("medical_records")
-        .add({
-          "tanggal": tgl.text,
-          "keluhan": keluhan.text,
+    try {
+      await FirebaseFirestore.instance
+          .collection("patients")
+          .doc(widget.patientId)
+          .collection("medical_records")
+          .add({
+        "tanggal": tgl.text.trim(),
+        "keluhan": keluhan.text.trim(),
+        "td_sistolik": td1.text.trim(),
+        "td_diastolik": td2.text.trim(),
+        "nadi": nadi.text.trim(),
+        "suhu": suhu.text.trim(),
+        "gula_darah": gula.text.trim(),
+        "kolesterol": kolesterol.text.trim(),
+        "asam_urat": asamUrat.text.trim(),
+        "diagnosa_id": selectedDiagnosaId,
+        "diagnosa": diagnosa.text.trim(),
+        "terapi": terapi.text.trim(),
+        "alergi_obat": alergiObat.text.trim(),
+        "alergi_makanan": alergiMakanan.text.trim(),
+        "is_deleted": false,
+        "created_at": FieldValue.serverTimestamp(),
+      });
 
-          "td_sistolik": td1.text,
-          "td_diastolik": td2.text,
+      if (!mounted) return;
 
-          "nadi": nadi.text,
-          "suhu": suhu.text,
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
 
-          "gula_darah": gula.text,
-          "kolesterol": kolesterol.text,
-          "asam_urat": asamUrat.text,
-
-          "diagnosa": diagnosa.text,
-          "terapi": terapi.text,
-
-          "alergi_obat": alergiObat.text,
-          "alergi_makanan": alergiMakanan.text,
-
-          "created_at": FieldValue.serverTimestamp(),
-        });
-
-    setState(() => loading = false);
-
-    Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal menyimpan: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
   }
 
-  /// 🔹 INPUT COMPONENT
-  Widget input(TextEditingController c, String label, {String? suffix}) {
+  Widget input(
+    TextEditingController c,
+    String label, {
+    String? suffix,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: c,
-        keyboardType: TextInputType.text,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
           suffixText: suffix,
           filled: true,
-          fillColor: Colors.grey[100],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget diagnosisPicker() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: GestureDetector(
+        onTap: pilihDiagnosa,
+        child: AbsorbPointer(
+          child: TextField(
+            controller: diagnosa,
+            decoration: InputDecoration(
+              labelText: "Diagnosis",
+              hintText: "Pilih diagnosis dari daftar",
+              filled: true,
+              fillColor: Colors.white,
+              prefixIcon: const Icon(
+                Icons.healing_rounded,
+                color: Colors.green,
+              ),
+              suffixIcon: const Icon(Icons.arrow_drop_down_rounded),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -362,97 +380,135 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FA),
+        appBar: AppBar(
+          title: const Text(
+            "Tambah Rekam Medis",
+            style: TextStyle(color: Colors.black),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              sectionTitle("Data Pemeriksaan"),
 
-      appBar: AppBar(
-        title: const Text("Tambah Rekam Medis"),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
+              GestureDetector(
+                onTap: pickDate,
+                child: AbsorbPointer(child: input(tgl, "Tanggal")),
+              ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            /// 📅 TANGGAL
-            GestureDetector(
-              onTap: pickDate,
-              child: AbsorbPointer(child: input(tgl, "Tanggal")),
-            ),
+              input(keluhan, "Keluhan", maxLines: 3),
 
-            input(keluhan, "Keluhan"),
+              Row(
+                children: [
+                  Expanded(
+                    child: input(
+                      td1,
+                      "Sistolik",
+                      suffix: "mmHg",
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: input(
+                      td2,
+                      "Diastolik",
+                      suffix: "mmHg",
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
 
-            /// 🔥 TEKANAN DARAH
-            Row(
-              children: [
-                Expanded(child: input(td1, "Sistolik", suffix: "mmHg")),
-                const SizedBox(width: 10),
-                Expanded(child: input(td2, "Diastolik", suffix: "mmHg")),
-              ],
-            ),
+              input(
+                nadi,
+                "Nadi",
+                suffix: "x/menit",
+                keyboardType: TextInputType.number,
+              ),
+              input(
+                suhu,
+                "Suhu",
+                suffix: "°C",
+                keyboardType: TextInputType.number,
+              ),
 
-            input(nadi, "Nadi", suffix: "x/menit"),
-            input(suhu, "Suhu", suffix: "°C"),
+              sectionTitle("Pemeriksaan Laboratorium"),
 
-            const Divider(),
+              input(
+                gula,
+                "Gula Darah",
+                suffix: "mg/dL",
+                keyboardType: TextInputType.number,
+              ),
+              input(
+                kolesterol,
+                "Kolesterol",
+                suffix: "mg/dL",
+                keyboardType: TextInputType.number,
+              ),
+              input(
+                asamUrat,
+                "Asam Urat",
+                suffix: "mg/dL",
+                keyboardType: TextInputType.number,
+              ),
 
-            /// 🔬 LAB
-            input(gula, "Gula Darah", suffix: "mg/dL"),
-            input(kolesterol, "Kolesterol", suffix: "mg/dL"),
-            input(asamUrat, "Asam Urat", suffix: "mg/dL"),
+              sectionTitle("Diagnosis dan Terapi"),
 
-            const Divider(),
+              diagnosisPicker(),
+              input(terapi, "Terapi", maxLines: 3),
 
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: GestureDetector(
-                onTap: pilihDiagnosa,
-                child: AbsorbPointer(
-                  child: TextField(
-                    controller: diagnosa,
-                    decoration: InputDecoration(
-                      labelText: "Diagnosa",
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      suffixIcon: const Icon(Icons.arrow_drop_down),
+              sectionTitle("Alergi"),
+
+              input(alergiObat, "Alergi Obat"),
+              input(alergiMakanan, "Alergi Makanan"),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: loading ? null : saveData,
+                  icon: loading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.save_rounded, color: Colors.white),
+                  label: Text(
+                    loading ? "MENYIMPAN..." : "SIMPAN",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    disabledBackgroundColor: Colors.green.withOpacity(0.45),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
               ),
-            ),
-            input(terapi, "Terapi"),
-
-            const Divider(),
-
-            input(alergiObat, "Alergi Obat"),
-            input(alergiMakanan, "Alergi Makanan"),
-
-            const SizedBox(height: 20),
-
-            /// 💾 BUTTON
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: loading ? null : saveData,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child:
-                    loading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("SIMPAN"),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

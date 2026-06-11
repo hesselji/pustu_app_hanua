@@ -24,6 +24,9 @@ class MedicalRecordScreen extends StatefulWidget {
 class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
   String selectedDate = "";
 
+  final int pageSize = 10;
+  int visibleItemCount = 10;
+
   /// 📅 PICK DATE
   Future<void> pickDate() async {
     DateTime? picked = await showDatePicker(
@@ -39,6 +42,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
 
       setState(() {
         selectedDate = formatted;
+        visibleItemCount = pageSize;
       });
     }
   }
@@ -182,8 +186,6 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
       builder: (_) {
         return StatefulBuilder(
           builder: (context, setModal) {
-            
-
             return AlertDialog(
               title: const Text("Verifikasi Penghapusan"),
 
@@ -356,7 +358,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                             "deleted_by": user.email,
                           });
 
-                     if (!context.mounted) return;
+                      if (!context.mounted) return;
 
                       Navigator.pop(context);
 
@@ -454,7 +456,10 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () {
-                          setState(() => selectedDate = "");
+                          setState(() {
+                            selectedDate = "";
+                            visibleItemCount = pageSize;
+                          });
                         },
                       ),
                   ],
@@ -501,15 +506,83 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                   return db.compareTo(da);
                 });
 
+                final totalData = filtered.length;
+
+                final displayedData = filtered.take(visibleItemCount).toList();
+
+                final hasMore = visibleItemCount < totalData;
+
                 if (filtered.isEmpty) {
                   return const Center(child: Text("Belum ada rekam medis"));
                 }
 
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
+                  itemCount: displayedData.length + 1,
                   itemBuilder: (context, index) {
-                    final doc = filtered[index];
+                    if (index == displayedData.length) {
+                      return Column(
+                        children: [
+                          const SizedBox(height: 8),
+
+                          Text(
+                            "Menampilkan ${displayedData.length} dari $totalData rekam medis",
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          if (hasMore)
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    visibleItemCount += pageSize;
+                                  });
+                                },
+                                icon: const Icon(Icons.expand_more_rounded),
+                                label: const Text("Muat Lagi"),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.green,
+                                  side: const BorderSide(color: Colors.green),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 13,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Text(
+                                "Semua rekam medis sudah ditampilkan",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+
+                          const SizedBox(height: 20),
+                        ],
+                      );
+                    }
+
+                    final doc = displayedData[index];
                     final data = doc.data() as Map<String, dynamic>;
 
                     return Padding(
@@ -579,8 +652,6 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                                   builder: (_) {
                                     return StatefulBuilder(
                                       builder: (context, setModal) {
-                                     
-
                                         return AlertDialog(
                                           title: const Text(
                                             "Verifikasi Edit Rekam Medis",
@@ -749,7 +820,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> {
                                                         credential,
                                                       );
 
-                                                 if (!context.mounted) return;
+                                                  if (!context.mounted) return;
 
                                                   Navigator.pop(context);
 
