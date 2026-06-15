@@ -20,6 +20,16 @@ dependencies:
   provider: ^6.0.5
   intl: ^0.18.1
   connectivity_plus: ^6.0.3
+  crypto: ^3.0.3
+  shared_preferences: ^2.2.3
+  firebase_messaging: ^14.7.10
+  flutter_local_notifications: ^17.2.4
+  http: ^1.2.2
+  file_picker: ^8.0.7
+  file_saver: ^0.2.13
+  share_plus: ^10.0.0
+  cross_file: ^0.3.5
+  
 
   # EXPORT PDF
   pdf: ^3.11.0
@@ -67,3 +77,6 @@ flutter:
     - assets/logo_pustu.png
     - assets/logo_bakti_husada.png
     - assets/logo_kemenkes.png
+    - assets/bagus.jpeg
+    - assets/mahen.jpeg
+    - assets/hessel.jpeg

@@ -5,13 +5,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
-
 import 'provider/service_status.dart';
 import 'firebase_options.dart';
 import 'screens/desktop/web_home_screen.dart';
 import 'screens/desktop/web_perawat_dashboard.dart'; // 🔥 TAMBAH
 import 'widgets/network_overlay.dart';
 import '../screens/wrapper/auth_wrapper.dart';
+import 'services/fcm_service.dart';
 
 /// 🔥 CUSTOM SCROLL (WEB DRAG)
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
@@ -40,6 +40,8 @@ void main() async {
   } else {
     await Firebase.initializeApp();
   }
+
+  await FcmService.initialize();
 
   runApp(
     ChangeNotifierProvider(
