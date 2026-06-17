@@ -7,14 +7,13 @@ plugins {
 
 android {
     namespace = "com.example.pustu_app_hanua"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
 
-        // 🔥 WAJIB UNTUK flutter_local_notifications
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -24,21 +23,24 @@ android {
 
     defaultConfig {
         applicationId = "com.example.pustu_app_hanua"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+
+        // Jangan pakai flutter.minSdkVersion dulu, kita kunci agar stabil
+        minSdk = 23
+        targetSdk = 35
+
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
         release {
+            // Untuk sementara pakai debug signing agar APK bisa dibuat
             signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
 
 dependencies {
-    // 🔥 WAJIB UNTUK core library desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 

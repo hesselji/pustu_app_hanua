@@ -53,18 +53,47 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
   final Map<String, int> bulanMap = {
     "Jan": 1,
+    "Januari": 1,
+
     "Feb": 2,
+    "Februari": 2,
+
     "Mar": 3,
+    "Maret": 3,
+
     "Apr": 4,
+    "April": 4,
+
     "May": 5,
+    "Mei": 5,
+
     "Jun": 6,
+    "Juni": 6,
+
     "Jul": 7,
+    "Juli": 7,
+
     "Aug": 8,
+    "Agu": 8,
+    "Agustus": 8,
+
     "Sep": 9,
+    "September": 9,
+
     "Oct": 10,
+    "Okt": 10,
+    "Oktober": 10,
+
     "Nov": 11,
+    "November": 11,
+
     "Dec": 12,
+    "Des": 12,
+    "Desember": 12,
   };
+
+  String selectedJenisLaporan = "Bulanan";
+  String submittedJenisLaporan = "Bulanan";
 
   String? selectedBulan;
   int? selectedTahun;
@@ -92,11 +121,34 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
   Map<String, int> penyakitMap = {};
 
-  /// 🔥 CACHE PASIEN
+  ///CACHE PASIEN
   Map<String, Map<String, dynamic>> cachePasien = {};
 
-  /// 🔥 DETAIL POPUP
+  ///DETAIL POPUP
   Map<String, List<Map<String, dynamic>>> detailKunjungan = {};
+  bool get isLaporanTahunan {
+    return submittedBulan == "Satu Tahun Penuh";
+  }
+
+  bool get isSubmittedTahunan {
+    return submittedJenisLaporan == "Tahunan";
+  }
+
+  String getPeriodeLaporan() {
+    if (isSubmittedTahunan) {
+      return "Januari sampai Desember $submittedTahun";
+    }
+
+    return "$submittedBulan $submittedTahun";
+  }
+
+  String getJudulLaporan() {
+    if (isSubmittedTahunan) {
+      return "REKAPAN TAHUNAN JANUARI - DESEMBER $submittedTahun";
+    }
+
+    return "REKAPAN BULANAN ${submittedBulan!.toUpperCase()} $submittedTahun";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,44 +170,98 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
         child: Column(
           children: [
             /// FORM
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: selectedBulan,
-                    decoration: _inputStyle("Bulan"),
-                    items:
-                        bulanList
-                            .map(
-                              (e) => DropdownMenuItem(value: e, child: Text(e)),
-                            )
-                            .toList(),
-                    onChanged: (val) => setState(() => selectedBulan = val),
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    value: selectedTahun,
-                    decoration: _inputStyle("Tahun"),
-                    items:
-                        _tahunList()
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e.toString()),
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (val) => setState(() => selectedTahun = val),
-                  ),
-                ),
+            DropdownButtonFormField<String>(
+              value: selectedJenisLaporan,
+              decoration: _inputStyle("Jenis Laporan"),
+              items: const [
+                DropdownMenuItem(value: "Bulanan", child: Text("Bulanan")),
+                DropdownMenuItem(value: "Tahunan", child: Text("Tahunan")),
               ],
+              onChanged: (val) {
+                setState(() {
+                  selectedJenisLaporan = val ?? "Bulanan";
+                  selectedBulan = null;
+                  showResult = false;
+                  noData = false;
+                });
+              },
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
+
+            if (selectedJenisLaporan == "Bulanan")
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedBulan,
+                      decoration: _inputStyle("Bulan"),
+                      items:
+                          bulanList
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
+                              .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          selectedBulan = val;
+                          showResult = false;
+                          noData = false;
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(width: 20),
+
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: selectedTahun,
+                      decoration: _inputStyle("Tahun"),
+                      items:
+                          _tahunList()
+                              .map(
+                                (e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e.toString()),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          selectedTahun = val;
+                          showResult = false;
+                          noData = false;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              )
+            else
+              DropdownButtonFormField<int>(
+                value: selectedTahun,
+                decoration: _inputStyle("Tahun"),
+                items:
+                    _tahunList()
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(e.toString()),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    selectedTahun = val;
+                    showResult = false;
+                    noData = false;
+                  });
+                },
+              ),
+
+            const SizedBox(height: 24),
 
             /// BUTTON
             SizedBox(
@@ -179,13 +285,13 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 26),
 
             if (loading) const CircularProgressIndicator(),
 
             if (noData)
               Text(
-                "Tidak ada data pada $submittedBulan $submittedTahun",
+                "Tidak ada data pada ${getPeriodeLaporan()}",
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.red,
@@ -382,15 +488,34 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   /// =========================
   /// FIREBASE
   /// =========================
-
   Future<void> _submitLaporan() async {
-    if (selectedBulan == null || selectedTahun == null) {
+    final bool laporanTahunan = selectedJenisLaporan == "Tahunan";
+
+    if (selectedTahun == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tahun wajib dipilih"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!laporanTahunan && selectedBulan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Bulan wajib dipilih untuk laporan bulanan"),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
     setState(() {
-      submittedBulan = selectedBulan;
+      submittedJenisLaporan = selectedJenisLaporan;
+      submittedBulan = laporanTahunan ? null : selectedBulan;
       submittedTahun = selectedTahun;
+
       loading = true;
       showResult = false;
       noData = false;
@@ -402,105 +527,94 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
     perempuan = 0;
 
     umurMap.updateAll((key, value) => 0);
-
     penyakitMap.clear();
-
     detailKunjungan.clear();
 
     Set<String> pasienUnik = {};
     Set<String> pasienGenderTerhitung = {};
     Set<String> pasienUmurTerhitung = {};
 
-    int bulanAngka = bulanList.indexOf(submittedBulan!) + 1;
+    final int bulanAngka =
+        laporanTahunan ? 0 : bulanList.indexOf(submittedBulan!) + 1;
 
     final snapshot = await firestore.collectionGroup("medical_records").get();
 
     for (var doc in snapshot.docs) {
       final m = doc.data();
 
-      /// 🔥 SKIP JIKA DIHAPUS
       bool isDeleted = m["is_deleted"] ?? false;
-
       if (isDeleted == true) continue;
 
       if (m["tanggal"] == null) continue;
 
-      /// 🔥 PAKAI FIELD TANGGAL
       DateTime? dt = parseTanggal(m["tanggal"]);
-
       if (dt == null) continue;
 
-      if (dt.month == bulanAngka && dt.year == submittedTahun) {
-        totalKunjungan++;
+      final bool masukPeriode =
+          laporanTahunan
+              ? dt.year == submittedTahun
+              : dt.month == bulanAngka && dt.year == submittedTahun;
 
-        String pasienId = doc.reference.parent.parent!.id;
+      if (!masukPeriode) continue;
 
-        pasienUnik.add(pasienId);
+      totalKunjungan++;
 
-        /// CACHE PASIEN
-        if (!cachePasien.containsKey(pasienId)) {
-          final pDoc =
-              await firestore.collection("patients").doc(pasienId).get();
+      String pasienId = doc.reference.parent.parent!.id;
 
-          if (pDoc.exists) {
-            cachePasien[pasienId] = pDoc.data()!;
+      pasienUnik.add(pasienId);
+
+      if (!cachePasien.containsKey(pasienId)) {
+        final pDoc = await firestore.collection("patients").doc(pasienId).get();
+
+        if (pDoc.exists) {
+          cachePasien[pasienId] = pDoc.data()!;
+        }
+      }
+
+      final p = cachePasien[pasienId];
+
+      if (p != null) {
+        String nama = p["nama"] ?? "-";
+        String jk = p["jk"] ?? "";
+        String tgl = p["tgl"] ?? "";
+
+        if (!detailKunjungan.containsKey(nama)) {
+          detailKunjungan[nama] = [];
+        }
+
+        detailKunjungan[nama]!.add({
+          "tanggal": m["tanggal"] ?? "-",
+          "diagnosa": m["diagnosa"] ?? "-",
+        });
+
+        if (!pasienGenderTerhitung.contains(pasienId)) {
+          pasienGenderTerhitung.add(pasienId);
+
+          if (jk.toLowerCase().contains("laki")) {
+            laki++;
+          } else {
+            perempuan++;
           }
         }
 
-        final p = cachePasien[pasienId];
+        if (!pasienUmurTerhitung.contains(pasienId)) {
+          pasienUmurTerhitung.add(pasienId);
 
-        if (p != null) {
-          String nama = p["nama"] ?? "-";
-
-          String jk = p["jk"] ?? "";
-
-          String tgl = p["tgl"] ?? "";
-
-          /// DETAIL POPUP
-          if (!detailKunjungan.containsKey(nama)) {
-            detailKunjungan[nama] = [];
-          }
-
-          detailKunjungan[nama]!.add({
-            "tanggal": m["tanggal"] ?? "-",
-            "diagnosa": m["diagnosa"] ?? "-",
-          });
-
-          /// GENDER 1x
-          if (!pasienGenderTerhitung.contains(pasienId)) {
-            pasienGenderTerhitung.add(pasienId);
-
-            if (jk.toLowerCase().contains("laki")) {
-              laki++;
-            } else {
-              perempuan++;
-            }
-          }
-
-          /// UMUR 1x
-          if (!pasienUmurTerhitung.contains(pasienId)) {
-            pasienUmurTerhitung.add(pasienId);
-
-            int umur = hitungUmur(tgl);
-
-            kategoriUmur(umur);
-          }
+          int umur = hitungUmur(tgl);
+          kategoriUmur(umur);
         }
+      }
 
-        /// DIAGNOSIS TETAP SEMUA
-        String diagnosa = (m["diagnosa"] ?? "").toString().trim();
+      String diagnosa = (m["diagnosa"] ?? "").toString().trim();
 
-        if (diagnosa.isNotEmpty) {
-          diagnosa = normalisasiDiagnosa(diagnosa);
-
-          penyakitMap[diagnosa] = (penyakitMap[diagnosa] ?? 0) + 1;
-        }
+      if (diagnosa.isNotEmpty) {
+        diagnosa = normalisasiDiagnosa(diagnosa);
+        penyakitMap[diagnosa] = (penyakitMap[diagnosa] ?? 0) + 1;
       }
     }
 
     totalPasien = pasienUnik.length;
 
-    /// SORT
     penyakitMap = Map.fromEntries(
       penyakitMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
     );
@@ -596,7 +710,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
               /// =========================
               pw.Center(
                 child: pw.Text(
-                  "REKAPAN BULANAN ${submittedBulan!.toUpperCase()} $submittedTahun\n"
+                  "${getJudulLaporan()}\n"
                   "PUSKESMAS PEMBANTU (PUSTU) HANUA",
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
@@ -944,9 +1058,7 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
 
     sheet
         .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-        .value = TextCellValue(
-      "REKAPAN BULANAN ${submittedBulan!.toUpperCase()} $submittedTahun",
-    );
+        .value = TextCellValue(getJudulLaporan());
 
     sheet
         .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
@@ -1183,6 +1295,10 @@ class _RekapanBulananPageState extends State<RekapanBulananPage> {
   }
 
   String getNamaFile() {
+    if (isSubmittedTahunan) {
+      return "Rekapan_Tahunan_Januari_Desember_${submittedTahun}";
+    }
+
     return "Rekapan_Bulanan_${submittedBulan}_${submittedTahun}";
   }
 
